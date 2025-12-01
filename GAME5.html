@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Kessler Syndrome: Orbital Shells</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        /* 左侧物理面板 */
+        #dashboard {
+            position: absolute; top: 20px; left: 20px;
+            color: #fff;
+            background: rgba(0,0,0,0.85);
+            padding: 20px;
+            border-left: 3px solid #00aaff;
+            font-family: 'Courier New', monospace;
+            width: 240px;
+            backdrop-filter: blur(8px);
+        }
+        .stat-row { margin-bottom: 15px; }
+        .label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 2px;}
+        .value { font-size: 20px; font-weight: bold; color: #fff; }
+        .unit { font-size: 12px; color: #00aaff; margin-left: 5px; }
+        
+        .zone-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px; 
+            font-size: 12px; font-weight: bold; color: #000; margin-top: 5px;
+        }
+
+        /* 底部控制台 */
+        #controls-wrapper {
+            position: absolute; bottom: 30px; width: 100%;
+            display: flex; justify-content: center; pointer-events: auto;
+        }
+        #controls {
+            background: rgba(10,10,10,0.9);
+            border: 1px solid #444;
+            padding: 20px 40px;
+            display: flex; gap: 40px;
+            border-radius: 12px;
+            align-items: center;
+            box-shadow: 0 0 40px rgba(0, 170, 255, 0.1);
+        }
+        .control-group { display: flex; flex-direction: column; align-items: center; }
+        .control-title { font-size: 11px; color: #aaa; margin-bottom: 12px; font-weight: bold; letter-spacing: 2px; }
+
+        /* 轨道选择按钮网格 */
+        .orbit-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .orbit-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            color: #888;
+            padding: 10px 5px;
+            width: 90px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .orbit-btn:hover { border-color: #fff; color: #fff; }
+        .orbit-btn.active { 
+            background: #00aaff; color: #000; border-color: #00aaff; 
+            box-shadow: 0 0 15px #00aaff; transform: scale(1.05);
+        }
+        .btn-name { display: block; font-size: 12px; font-weight: bold; }
+        .btn-alt { display: block; font-size: 10px; opacity: 0.8; }
+
+        /* 倾角按钮 */
+        .inc-ctrl { display: flex; align-items: center; gap: 10px; }
+        .btn-inc {
+            background: #111; border: 1px solid #555; color: #fff;
+            width: 30px; height: 30px; cursor: pointer; font-weight: bold;
+            border-radius: 50%; transition: all 0.2s;
+        }
+        .btn-inc:hover { border-color: #00aaff; color: #00aaff; }
+        #inc-display { font-family: monospace; color: #00aaff; font-size: 16px; width: 40px; text-align: center; }
+
+        /* 警告信息 */
+        #alert {
+            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+            color: #ff3333; font-weight: bold; font-size: 24px; letter-spacing: 4px;
+            text-shadow: 0 0 20px #ff0000; opacity: 0; transition: opacity 0.2s;
+            pointer-events: none; border: 2px solid #ff3333; padding: 10px 30px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="dashboard">
+            <div class="stat-row">
+                <span class="label">TARGET ORBIT</span>
+                <div id="zone-badge" class="zone-badge" style="background:#fff;">READY</div>
+            </div>
+            <div class="stat-row">
+                <span class="label">ALTITUDE</span>
+                <span id="disp-alt" class="value">0</span><span class="unit">km</span>
+            </div>
+            <div class="stat-row">
+                <span class="label">REQUIRED VELOCITY</span>
+                <span id="disp-vel" class="value">0.00</span><span class="unit">km/s</span>
+            </div>
+            <div class="stat-row">
+                <span class="label">ORBITAL PERIOD</span>
+                <span id="disp-period" class="value">0</span><span class="unit">min</span>
+            </div>
+            <div class="stat-row" style="margin-top:20px; border-top:1px solid #333; padding-top:10px;">
+                <span class="label">HULL INTEGRITY</span>
+                <span id="disp-armor" class="value" style="color:#00ff00">100%</span>
+            </div>
+        </div>
+
+        <div id="alert">COLLISION WARNING</div>
+
+        <div id="controls-wrapper">
+            <div id="controls">
+                <!-- 轨道预设 (核心修改) -->
+                <div class="control-group">
+                    <span class="control-title">ORBIT PRESETS</span>
+                    <div class="orbit-grid">
+                        <button class="orbit-btn active" onclick="selectOrbit(550, 'LEO', this)">
+                            <span class="btn-name">Starlink</span><span class="btn-alt">550km</span>
+                        </button>
+                        <button class="orbit-btn" onclick="selectOrbit(780, 'LEO', this)">
+                            <span class="btn-name">Iridium</span><span class="btn-alt">780km</span>
+                        </button>
+                        <button class="orbit-btn" onclick="selectOrbit(1200, 'LEO', this)">
+                            <span class="btn-name">OneWeb</span><span class="btn-alt">1200km</span>
+                        </button>
+                        <button class="orbit-btn" onclick="selectOrbit(20200, 'MEO', this)">
+                            <span class="btn-name">GPS</span><span class="btn-alt">20200km</span>
+                        </button>
+                        <button class="orbit-btn" onclick="selectOrbit(23222, 'MEO', this)">
+                            <span class="btn-name">Galileo</span><span class="btn-alt">23222km</span>
+                        </button>
+                        <button class="orbit-btn" onclick="selectOrbit(35786, 'GEO', this)">
+                            <span class="btn-name">GEO Sync</span><span class="btn-alt">35786km</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 倾角控制 -->
+                <div class="control-group">
+                    <span class="control-title">INCLINATION</span>
+                    <div class="inc-ctrl">
+                        <button class="btn-inc" onclick="adjustInc(-10)">-</button>
+                        <span id="inc-display">20°</span>
+                        <button class="btn-inc" onclick="adjustInc(10)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 物理常数 (Physics Constants) ---
+        const PHYSICS = {
+            Re: 6371,          // 地球半径 (km)
+            mu: 398600,        // 标准重力参数 (km^3/s^2)
+            scale: 0.001,      // 缩放: 1 unit = 1000 km
+            simSpeed: 800      // 时间流速
+        };
+
+        let state = {
+            h: 550,            // 当前高度 (km)
+            v: 7.58,           // 当前速度 (km/s) - 根据 h 自动计算
+            inc: 20 * Math.PI / 180, // 倾角
+            
+            // 轨道参数
+            a: 0, T: 0,
+            
+            // 状态
+            meanAnomaly: 0,
+            armor: 100,
+            crashed: false
+        };
+
+        // --- Three.js Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(20, 10, 30);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 10;
+        controls.maxDistance = 150;
+
+        // --- 1. 地球: 白陆蓝海 (Corrected Visuals) ---
+        const earthGroup = new THREE.Group();
+        scene.add(earthGroup);
+
+        // A. 白色基底 (陆地)
+        const baseSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(PHYSICS.Re * PHYSICS.scale - 0.01, 64, 64), 
+            new THREE.MeshBasicMaterial({ color: 0xffffff }) 
+        );
+        earthGroup.add(baseSphere);
+
+        // B. 蓝色海洋 (带遮罩)
+        const texLoader = new THREE.TextureLoader();
+        const earthMask = texLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg');
+        earthMask.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+        const oceanMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(PHYSICS.Re * PHYSICS.scale, 64, 64),
+            new THREE.MeshBasicMaterial({ 
+                color: 0x004488,       
+                alphaMap: earthMask,    
+                transparent: true,     
+                side: THREE.DoubleSide
+            })
+        );
+        earthGroup.add(oceanMesh);
+
+        // C. 大气光晕
+        const outlineMesh = new THREE.Mesh(
+            new THREE.SphereGeometry(PHYSICS.Re * PHYSICS.scale + 0.15, 64, 64),
+            new THREE.MeshBasicMaterial({ 
+                color: 0x0066ff, side: THREE.BackSide, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending 
+            })
+        );
+        earthGroup.add(outlineMesh);
+
+        // --- 2. 玩家卫星 ---
+        const orbitPlane = new THREE.Group(); 
+        scene.add(orbitPlane);
+
+        // 轨迹线 (圆)
+        const trackGeo = new THREE.RingGeometry(0, 0, 128); // 动态更新
+        // 使用 Line 绘制圆形轨道
+        const circleCurve = new THREE.EllipseCurve(0, 0, 1, 1, 0, 2*Math.PI, false, 0);
+        const circlePts = circleCurve.getPoints(128);
+        const circleGeo = new THREE.BufferGeometry().setFromPoints(circlePts);
+        const circleMat = new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.5, transparent: true });
+        const orbitLine = new THREE.LineLoop(circleGeo, circleMat);
+        orbitLine.rotation.x = Math.PI / 2;
+        orbitPlane.add(orbitLine);
+
+        // 卫星实体
+        const satMesh = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), new THREE.MeshBasicMaterial({color: 0x00ffff}));
+        const panels = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.1, 1.2), new THREE.MeshBasicMaterial({color: 0x888888}));
+        satMesh.add(body); satMesh.add(panels);
+        orbitPlane.add(satMesh);
+
+        // --- 3. 垃圾场 (Debris Shells) ---
+        // 数量增加，对应 UI 上的轨道高度
+        const debrisCount = 12000;
+        const debrisGeo = new THREE.BoxGeometry(1, 1, 1);
+        const debrisMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        // 启用顶点颜色
+        debrisGeo.setAttribute('color', new THREE.InstancedBufferAttribute(new Float32Array(debrisCount * 3), 3));
+        debrisMat.vertexColors = true;
+
+        const debrisMesh = new THREE.InstancedMesh(debrisGeo, debrisMat, debrisCount);
+        scene.add(debrisMesh);
+
+        const debrisData = [];
+        const dummy = new THREE.Object3D();
+        const color = new THREE.Color();
+
+        for(let i=0; i<debrisCount; i++) {
+            let alt, inc, raan;
+            let zoneColor = 0xffffff;
+            let size = 0.02;
+            const r = Math.random();
+
+            // 生成逻辑：对应 UI 上的几个关键层
+            if (r < 0.25) { // 550km Starlink
+                alt = 550 + (Math.random()-0.5) * 50;
+                zoneColor = 0x00ffcc; size = 0.015;
+                inc = Math.acos(2*Math.random()-1);
+            } else if (r < 0.40) { // 780km Iridium
+                alt = 780 + (Math.random()-0.5) * 80;
+                zoneColor = 0xffaa00; size = 0.02;
+                inc = Math.acos(2*Math.random()-1);
+            } else if (r < 0.50) { // 1200km OneWeb
+                alt = 1200 + (Math.random()-0.5) * 100;
+                zoneColor = 0xffffff; size = 0.015;
+                inc = Math.acos(2*Math.random()-1);
+            } else if (r < 0.65) { // 20200km GPS
+                alt = 20200 + (Math.random()-0.5) * 500;
+                zoneColor = 0xaaaaff; size = 0.03;
+                inc = 55 * (Math.PI/180) + (Math.random()-0.5)*0.2;
+            } else if (r < 0.80) { // 35786km GEO
+                alt = 35786 + (Math.random()-0.5) * 200;
+                zoneColor = 0xffffff; size = 0.04;
+                inc = (Math.random()-0.5) * 0.1; // Equatorial
+            } else { // Noise / Gap Fill
+                alt = 300 + Math.random() * 36000;
+                zoneColor = 0x666666; size = 0.01;
+                inc = Math.random() * Math.PI;
+            }
+
+            const radius = (PHYSICS.Re + alt) * PHYSICS.scale;
+            const theta = Math.random() * Math.PI * 2;
+            raan = Math.random() * Math.PI * 2;
+
+            // Store orbital params
+            debrisData.push({
+                radius: radius, theta: theta, inc: inc, raan: raan,
+                // Circular speed approx for debris
+                speed: Math.sqrt(PHYSICS.mu / (PHYSICS.Re + alt)) * PHYSICS.scale
+            });
+
+            // Set Color
+            color.setHex(zoneColor);
+            debrisMesh.setColorAt(i, color);
+            
+            // Initial Pos
+            dummy.scale.set(size, size, size);
+            debrisMesh.setMatrixAt(i, dummy.matrix);
+        }
+        debrisMesh.instanceMatrix.needsUpdate = true;
+        if(debrisMesh.instanceColor) debrisMesh.instanceColor.needsUpdate = true;
+
+
+        // --- 核心物理逻辑 (Physics Update) ---
+        function updateOrbitPhysics() {
+            // 根据高度 h 计算圆轨道速度 v
+            // v = sqrt(GM / r)
+            const r = PHYSICS.Re + state.h;
+            state.v = Math.sqrt(PHYSICS.mu / r);
+            
+            // 计算周期 T = 2*pi * sqrt(r^3 / mu)
+            state.T = 2 * Math.PI * Math.sqrt(Math.pow(r, 3) / PHYSICS.mu);
+            state.a = r; // 圆轨道 a = r
+
+            // 更新 UI
+            document.getElementById('disp-alt').innerText = state.h;
+            document.getElementById('disp-vel').innerText = state.v.toFixed(2);
+            document.getElementById('disp-period').innerText = (state.T / 60).toFixed(0);
+            
+            // 更新可视化轨道大小
+            const r_sim = r * PHYSICS.scale;
+            orbitLine.scale.set(r_sim, r_sim, 1);
+        }
+
+        // --- 交互控制函数 ---
+        window.selectOrbit = function(km, type, btn) {
+            state.h = km;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.orbit-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // 更新徽章
+            const badge = document.getElementById('zone-badge');
+            badge.innerText = type + " - " + km + "km";
+            if(type === 'LEO') { badge.style.backgroundColor = '#ff4444'; badge.style.color = 'white'; }
+            else if(type === 'GEO') { badge.style.backgroundColor = '#00ffff'; badge.style.color = 'black'; }
+            else { badge.style.backgroundColor = '#ffff00'; badge.style.color = 'black'; }
+
+            // 重置位置
+            state.meanAnomaly = 0;
+            
+            // 重新计算物理
+            updateOrbitPhysics();
+        };
+
+        window.adjustInc = function(delta) {
+            let deg = Math.round(state.inc * 180 / Math.PI) + delta;
+            // 限制范围 -90 到 90
+            if(deg > 90) deg = 90;
+            if(deg < -90) deg = -90;
+            state.inc = deg * Math.PI / 180;
+            document.getElementById('inc-display').innerText = deg + "°";
+        };
+
+        // --- 动画循环 ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            const dt = clock.getDelta();
+            
+            if(!state.crashed) {
+                // 1. 卫星运动 (Kepler Circular)
+                // 平均角速度 n = sqrt(mu / a^3)
+                const r = PHYSICS.Re + state.h;
+                const n = Math.sqrt(PHYSICS.mu / Math.pow(r, 3));
+                
+                state.meanAnomaly += n * dt * PHYSICS.simSpeed;
+                
+                const r_sim = r * PHYSICS.scale;
+                const x = r_sim * Math.cos(state.meanAnomaly);
+                const z = r_sim * Math.sin(state.meanAnomaly);
+                
+                satMesh.position.set(x, 0, z);
+                satMesh.lookAt(0,0,0); // 指向地球
+
+                // 2. 垃圾运动 (Visual Only)
+                // 简单的圆周运动模拟
+                for(let i=0; i<debrisCount; i++) {
+                    const d = debrisData[i];
+                    d.theta += d.speed * dt * (PHYSICS.simSpeed * 0.05); // 垃圾动得慢一点以便观察
+
+                    // 坐标转换 (考虑倾角和升交点)
+                    // x = r(cR cT - sR sT cI)
+                    // z = r(sR cT + cR sT cI)
+                    // y = r(sT sI)
+                    const cT = Math.cos(d.theta), sT = Math.sin(d.theta);
+                    const cI = Math.cos(d.inc), sI = Math.sin(d.inc);
+                    const cR = Math.cos(d.raan), sR = Math.sin(d.raan);
+
+                    const dx = d.radius * (cR * cT - sR * sT * cI);
+                    const dz = d.radius * (sR * cT + cR * sT * cI);
+                    const dy = d.radius * (sT * sI);
+
+                    dummy.position.set(dx, dy, dz);
+                    dummy.lookAt(0,0,0);
+                    dummy.updateMatrix();
+                    debrisMesh.setMatrixAt(i, dummy.matrix);
+
+                    // 3. 碰撞检测
+                    // 仅检测高度相近的 (简单的 filter)
+                    if (Math.abs(d.radius - r_sim) < 0.5) { // 高度差 < 500km
+                        const distSq = (dx - satMesh.position.x)**2 + (dy - satMesh.position.y)**2 + (dz - satMesh.position.z)**2;
+                        // 注意：这里需要把卫星坐标转到世界坐标，或者把垃圾转到卫星平面
+                        // 简化：只检测距离，假设卫星也在世界坐标系运动 (其实卫星是在 group 里转，需要转换)
+                        
+                        // 获取卫星真实世界坐标
+                        const satWorld = new THREE.Vector3();
+                        satMesh.getWorldPosition(satWorld);
+                        
+                        const distWorldSq = (dx - satWorld.x)**2 + (dy - satWorld.y)**2 + (dz - satWorld.z)**2;
+                        
+                        if (distWorldSq < 0.2) { // 碰撞阈值
+                            state.armor -= 1;
+                            const alert = document.getElementById('alert');
+                            alert.style.opacity = 1;
+                            setTimeout(()=> alert.style.opacity = 0, 200);
+                            
+                            document.getElementById('disp-armor').innerText = state.armor + "%";
+                            if(state.armor < 30) document.getElementById('disp-armor').style.color = "red";
+                            
+                            if(state.armor <= 0) {
+                                state.crashed = true;
+                                document.getElementById('end-status').innerText = "KESSLER SYNDROME TRIGGERED";
+                                document.getElementById('game-over').style.display = 'flex';
+                            }
+                        }
+                    }
+                }
+                debrisMesh.instanceMatrix.needsUpdate = true;
+            }
+
+            // 更新倾角
+            orbitPlane.rotation.z = THREE.MathUtils.lerp(orbitPlane.rotation.z, state.inc, 0.1);
+
+            renderer.render(scene, camera);
+        }
+
+        // 初始化
+        selectOrbit(550, 'LEO', document.querySelector('.orbit-btn')); // 默认 Starlink
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Kessler Syndrome: Clean Earth</title>
+    <title>Kessler Syndrome: Full Inclination</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Segoe UI', Roboto, Arial, sans-serif; }
         
@@ -230,24 +230,27 @@
         renderer.setPixelRatio(window.devicePixelRatio); 
         document.body.appendChild(renderer.domElement);
 
+        // OrbitControls
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.minDistance = 12;
         controls.maxDistance = 200;
+        // 允许360度翻转
+        controls.minPolarAngle = 0;
+        controls.maxPolarAngle = Math.PI; 
+        controls.rotateSpeed = 1.5;
 
-        // --- 1. 地球: 纯净白陆蓝海 (移除杂乱线框) ---
+        // --- 1. 地球: 陆白海蓝 ---
         const earthGroup = new THREE.Group();
         scene.add(earthGroup);
 
-        // A. 底层：白色球体 (陆地)
         const baseSphere = new THREE.Mesh(
             new THREE.SphereGeometry(R - 0.01, 128, 128), 
             new THREE.MeshBasicMaterial({ color: 0xffffff }) // White Land
         );
         earthGroup.add(baseSphere);
 
-        // B. 顶层：蓝色球体 (海洋) + 遮罩
         const texLoader = new THREE.TextureLoader();
         const earthMap = texLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg');
         earthMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -259,14 +262,10 @@
                 alphaMap: earthMap,    
                 transparent: true,     
                 side: THREE.DoubleSide
-                // 移除 alphaTest，让边缘更柔和，或者根据需要调整
             })
         );
         earthGroup.add(oceanMesh);
 
-        // [删除] 移除了 WireframeGeometry (那层黑色的杂线)
-
-        // C. 大气
         const outlineMesh = new THREE.Mesh(
             new THREE.SphereGeometry(R + 0.15, 64, 64),
             new THREE.MeshBasicMaterial({ 
@@ -396,7 +395,7 @@
             document.getElementById('month-display').innerText = state.currentMonth.toFixed(1);
             if(state.currentMonth >= CONFIG.monthsToWin) endGame(true);
 
-            // Fuel
+            // Fuel Logic
             const altRatio = state.targetAlt / 36000;
             const baseRate = 0.05; 
             const savings = altRatio * 0.045; 
@@ -522,7 +521,9 @@
         window.adjustInc = function(delta) {
             if(!state.active) return;
             let newInc = state.currentIncDeg + delta;
-            if(newInc < 0) newInc = 0; if(newInc > 90) newInc = 90;
+            if(newInc < -90) newInc = -90; // [修改] 扩展至 -90
+            if(newInc > 90) newInc = 90;
+            
             state.currentIncDeg = newInc;
             state.targetInc = newInc * (Math.PI / 180);
             document.getElementById('incVal').innerText = newInc + "°";
