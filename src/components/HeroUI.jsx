@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 
-// --- 🎨 核心配色系统 (HEX 格式) ---
+// --- 🎨 核心配色系统 ---
 const COLORS = {
   theme: '#5456F0',      // 主题色 (紫蓝色)
   textMain: '#F4F4F0',   // 主文字白
-  textDim: '#8899A6',    // 辅助文字灰
+  textDim: '#8899A6',    // 辅助文字灰 (偏蓝灰)
   bgDark: '#080808',     // 纯黑背景
-  danger: '#FF3300',     // 警告红
-  success: '#00FF88'     // 成功绿
+  headerBg: '#1A1A1A',   // 顶栏深灰背景
 };
 
 // --- 工具函数：Hex 转 RGBA ---
@@ -18,58 +17,38 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// --- 模拟的历史事件数据库 ---
-const HISTORY_DATABASE = {
-  '01-11': { year: '2007', title: '风云-1C 反卫星试验', desc: '产生超过 3,000 个可追踪碎片，是史上最大的碎片事件之一。' },
-  '02-10': { year: '2009', title: '铱星与宇宙号相撞', desc: '人类历史上首次卫星在轨高速碰撞，产生大量碎片云。' },
-  '11-15': { year: '2021', title: '反卫星导弹试验', desc: '某次试验产生约 1,500 个可追踪碎片，威胁国际空间站安全。' },
-  '06-01': { year: '1961', title: 'Transit 4A 爆炸', desc: '历史上第一次已知的轨道解体事件。' },
+// --- 工具函数：DMS 格式 ---
+const toDMS = (deg, isLat) => {
+  const absolute = Math.abs(deg);
+  const degrees = Math.floor(absolute);
+  const minutesNotTruncated = (absolute - degrees) * 60;
+  const minutes = Math.floor(minutesNotTruncated);
+  const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(1);
+  const direction = isLat ? (deg >= 0 ? 'N' : 'S') : (deg >= 0 ? 'E' : 'W');
+  return `${degrees}°${minutes}'${seconds}"${direction}`;
 };
 
 export default function HeroUI() {
-  const [location, setLocation] = useState({ lat: '--°N', long: '--°E' });
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); 
-  const [eventInfo, setEventInfo] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+  const [location, setLocation] = useState({ lat: "SCANNING...", long: "" });
 
-  // 1. 获取地理位置
+  // 1. 获取真实位置
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const lat = position.coords.latitude;
-        const long = position.coords.longitude;
-        const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
-        const longStr = `${Math.abs(long).toFixed(2)}°${long >= 0 ? 'E' : 'W'}`;
-        setLocation({ lat: latStr, long: longStr });
-      }, () => {
-        setLocation({ lat: 'UNKNOWN', long: 'OF-GRID' });
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({ 
+            lat: toDMS(position.coords.latitude, true), 
+            long: toDMS(position.coords.longitude, false) 
+          });
+        }, 
+        (error) => setLocation({ lat: "OFFLINE", long: "ERR:404" })
+      );
     }
   }, []);
-
-  // 2. 搜索逻辑
-  useEffect(() => {
-    setIsSearching(true);
-    setEventInfo(null);
-    const timer = setTimeout(() => {
-      const dateKey = selectedDate.slice(5); 
-      const foundEvent = HISTORY_DATABASE[dateKey];
-      if (foundEvent) {
-        setEventInfo(foundEvent);
-      } else {
-        setEventInfo(null);
-      }
-      setIsSearching(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [selectedDate]);
 
   return (
     <>
       <style>{`
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .blink { animation: blink 1s infinite; }
-        
         @keyframes bounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(10px); }
@@ -77,250 +56,165 @@ export default function HeroUI() {
         .arrow-bounce {
           animation: bounce 2s infinite ease-in-out;
         }
-
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-            opacity: 0.6;
-        }
-        input[type="date"]::-webkit-calendar-picker-indicator:hover {
-            opacity: 1;
-        }
       `}</style>
 
       <section style={{ 
-          height: '100vh', 
-          width: '100%', 
-          position: 'relative', 
-          display: 'flex',
-          flexDirection: 'column',
-          pointerEvents: 'none' 
+          height: '100vh', width: '100%', position: 'relative', 
+          display: 'flex', flexDirection: 'column', pointerEvents: 'none' 
       }}>
         
         {/* === TOP BAR (顶部导航栏) === */}
         <header style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'absolute', 
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '80px',
-            padding: '0 5vw',
-            backgroundColor: hexToRgba(COLORS.bgDark, 0.6),
-            backdropFilter: 'blur(10px)',          
-            borderBottom: `1px solid ${hexToRgba(COLORS.textMain, 0.1)}`, 
-            boxSizing: 'border-box',
-            zIndex: 20,
-            pointerEvents: 'auto' 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '80px',
+            padding: '0 4vw', backgroundColor: hexToRgba(COLORS.headerBg, 0.7), 
+            backdropFilter: 'blur(12px)', borderBottom: `1px solid ${hexToRgba(COLORS.textMain, 0.1)}`, 
+            boxSizing: 'border-box', zIndex: 20, pointerEvents: 'auto' 
         }}>
-            {/* 左侧 LOGO */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div style={{ width: '12px', height: '12px', background: COLORS.theme, borderRadius: '50%', boxShadow: `0 0 10px ${COLORS.theme}` }}></div>
-                <span style={{ 
-                    fontFamily: 'Lexend', 
-                    fontWeight: 700, 
-                    fontSize: '1.2rem', 
-                    letterSpacing: '2px',
-                    color: COLORS.textMain
-                }}>
-                    ORBIT.VIS
-                </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: COLORS.textMain, position: 'relative', display: 'flex', alignItems: 'center', overflow: 'visible' }}>
+                    <div style={{ width: '160%', height: '4px', backgroundColor: COLORS.theme, position: 'absolute', left: '-30%', borderRadius: '2px'}}></div>
+                </div>
+                <span style={{ fontFamily: 'Lexend', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '1px', color: COLORS.textMain }}>RE:SET</span>
+                <span style={{ fontFamily: 'Lexend', fontWeight: 400, fontSize: '0.8rem', color: COLORS.textDim, display: 'none', '@media (min-width: 1024px)': { display: 'inline' }}}>You know what is wrong, do you?</span>
             </div>
 
-            {/* 右侧 LOCATION */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', fontFamily: 'Courier New' }}>
-                {/* 🔴 修复：这里去掉了 display: none，现在它会一直显示了 */}
-                <span style={{ 
-                    color: COLORS.textDim, 
-                    fontSize: '0.8rem', 
-                    letterSpacing: '1px', 
-                    fontWeight: 'bold',
-                    textTransform: 'uppercase'
-                }}>
-                    CURRENT LOCATION
-                </span>
-                
-                <div style={{ 
-                    display: 'flex', 
-                    gap: '15px', 
-                    color: COLORS.theme, 
-                    padding: '4px 8px',
-                    fontWeight: 'bold',
-                    textShadow: `0 0 8px ${hexToRgba(COLORS.theme, 0.4)}`,
-                    background: hexToRgba(COLORS.theme, 0.1),
-                    borderRadius: '4px'
-                }}>
-                    <span>LAT: {location.lat}</span>
-                    <span style={{ color: '#444' }}>|</span>
-                    <span>LONG: {location.long}</span>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontFamily: 'Courier New' }}>
+                <span style={{ color: COLORS.textMain, fontSize: '1.2rem', fontWeight: 'bold' }}> / </span>
+                <span style={{ color: COLORS.textMain, fontSize: '0.9rem', fontWeight: 'bold', letterSpacing: '1px' }}>LOCATION</span>
+                <span style={{ color: COLORS.textMain, fontSize: '1.2rem', fontWeight: 'bold' }}> [ </span>
+                <span style={{ color: COLORS.textMain, fontWeight: 'bold', letterSpacing: '1px' }}>{location.lat} {location.long}</span>
+                <span style={{ color: COLORS.textMain, fontSize: '1.2rem', fontWeight: 'bold' }}> ] </span>
             </div>
         </header>
 
-        {/* === 左侧核心内容区 (带装饰圆) === */}
+        {/* === 左侧核心内容区 (已调整间距和顶部留白) === */}
         <div style={{ 
             flex: 1, 
-            display: 'flex',
-            alignItems: 'center',
-            paddingLeft: '10vw',
-            pointerEvents: 'auto' 
+            display: 'flex', 
+            alignItems: 'flex-start', 
+            paddingLeft: '8vw', 
+            // 🔴 调整 1：增加顶部留白，让内容向下推
+            paddingTop: '160px', 
+            paddingBottom: '100px', 
+            pointerEvents: 'auto',
+            overflowY: 'auto' 
         }}>
-            <div style={{ position: 'relative', maxWidth: '550px', marginTop: '40px' }}> 
+            <div style={{ position: 'relative', maxWidth: '700px' }}> 
                 
-                {/* 装饰圆 1 (左下) */}
+                {/* 装饰圆 1 (紫色 - E 侧) */}
                 <div style={{
-                    position: 'absolute',
-                    top: '80px',    
-                    left: '-120px', 
-                    width: '220px', 
-                    height: '220px',
-                    borderRadius: '50%',
-                    background: hexToRgba(COLORS.textMain, 0.05),
-                    backdropFilter: 'blur(8px)',
-                    zIndex: -1
+                    position: 'absolute', top: '-40px', left: '340px',
+                    width: '160px', height: '160px', borderRadius: '50%',
+                    background: hexToRgba(COLORS.theme, 0.2), backdropFilter: 'blur(15px)',
+                    border: `1px solid ${hexToRgba(COLORS.theme, 0.3)}`, zIndex: -1
                 }}></div>
 
-                {/* 装饰圆 2 (右上) */}
+                {/* 装饰圆 2 (深色 - 内容框后) */}
                 <div style={{
-                    position: 'absolute',
-                    top: '-30px',   
-                    left: '240px',
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    background: hexToRgba(COLORS.theme, 0.1),
-                    backdropFilter: 'blur(10px)',
-                    zIndex: -1
+                    position: 'absolute', top: '120px', left: '-100px',
+                    width: '240px', height: '240px', borderRadius: '50%',
+                    background: hexToRgba(COLORS.textMain, 0.05), backdropFilter: 'blur(20px)',
+                    border: `1px solid ${hexToRgba(COLORS.textMain, 0.1)}`, zIndex: -1
                 }}></div>
-
 
                 {/* 大标题 */}
                 <h1 style={{ 
-                    fontFamily: 'Lexend', 
-                    fontWeight: 700,
-                    fontSize: 'clamp(4rem, 6vw, 7rem)', 
-                    lineHeight: '0.9',
-                    color: COLORS.textMain,
-                    margin: '0 0 30px 0' 
+                    fontFamily: 'Lexend', fontWeight: 900, fontSize: 'clamp(5rem, 8vw, 8.5rem)', 
+                    lineHeight: '0.85', color: COLORS.textMain, 
+                    // 🔴 调整 2：压缩标题底部间距
+                    margin: '0 0 30px 0', 
+                    position: 'relative', zIndex: 0
                 }}>
                     SPACE<br />
                     <span style={{ color: COLORS.theme }}>DEBRIS</span>
                 </h1>
 
-                {/* 内容框 */}
+                {/* 核心内容区容器 */}
                 <div style={{ 
-                    borderLeft: `4px solid ${COLORS.theme}`, 
+                    borderLeft: `6px solid ${COLORS.theme}`, 
                     paddingLeft: '25px',
-                    background: `linear-gradient(90deg, ${hexToRgba(COLORS.theme, 0.08)} 0%, rgba(0,0,0,0) 100%)`
+                    display: 'flex',
+                    flexDirection: 'column',
+                    // 🔴 调整 3：压缩内部元素间距
+                    gap: '15px' 
                 }}>
-                    {/* 日期选择 */}
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ 
-                            display: 'block', 
-                            color: COLORS.textDim, 
-                            fontSize: '0.8rem', 
-                            marginBottom: '5px',
-                            letterSpacing: '1px',
-                            fontWeight: 'bold'
+                    
+                    {/* 1. 日期铭牌 [ | 12 | 02 ] */}
+                    <div style={{
+                        display: 'flex', alignItems: 'center',
+                        background: COLORS.theme,
+                        width: 'fit-content',
+                        padding: '5px 15px',
+                        borderRadius: '2px',
+                        boxShadow: `0 5px 15px ${hexToRgba(COLORS.theme, 0.4)}`
+                    }}>
+                        <div style={{ width: '2px', height: '20px', background: 'rgba(255,255,255,0.5)', marginRight: '10px' }}></div>
+                        <span style={{ 
+                            color: '#FFF', fontFamily: 'Lexend', fontWeight: '900', fontSize: '1.8rem', letterSpacing: '2px',
+                            marginRight: '10px'
                         }}>
-                            DATE ARCHIVE / 日期归档
-                        </label>
-                        <input 
-                            type="date" 
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                borderBottom: `2px solid ${hexToRgba(COLORS.textMain, 0.2)}`,
-                                color: COLORS.textMain,
-                                fontFamily: 'Lexend',
-                                fontSize: '1.8rem', 
-                                fontWeight: 'bold',
-                                outline: 'none',
-                                width: '100%',
-                                padding: '5px 0'
-                            }}
-                        />
+                            12
+                        </span>
+                        <div style={{ width: '2px', height: '20px', background: 'rgba(255,255,255,0.5)', marginRight: '10px' }}></div>
+                        <span style={{ 
+                            color: '#FFF', fontFamily: 'Lexend', fontWeight: '900', fontSize: '1.8rem', letterSpacing: '2px'
+                        }}>
+                            02
+                        </span>
                     </div>
 
-                    {/* 事件反馈框 */}
-                    <div style={{ minHeight: '100px' }}>
-                        {isSearching ? (
-                            <div style={{ color: COLORS.theme, fontFamily: 'Courier New', fontSize: '0.9rem' }} className="blink">
-                                [ SEARCHING DATABASE... ]
-                            </div>
-                        ) : eventInfo ? (
-                            <div style={{ padding: '15px', background: hexToRgba(COLORS.danger, 0.1), border: `1px solid ${COLORS.danger}` }}>
-                                <div style={{ 
-                                    display: 'inline-block', 
-                                    background: COLORS.danger, 
-                                    color: 'black', 
-                                    padding: '2px 8px', 
-                                    fontSize: '0.7rem', 
-                                    fontWeight: 'bold',
-                                    marginBottom: '8px',
-                                }}>
-                                    WARNING: EVENT DETECTED
-                                </div>
-                                <h3 style={{ margin: '0 0 10px 0', color: COLORS.textMain, fontSize: '1.1rem' }}>
-                                    {eventInfo.year} | {eventInfo.title}
-                                </h3>
-                                <p style={{ margin: 0, color: COLORS.textDim, fontSize: '0.9rem', lineHeight: '1.4' }}>
-                                    {eventInfo.desc}
-                                </p>
-                            </div>
-                        ) : (
-                            <div style={{ padding: '15px', background: hexToRgba(COLORS.theme, 0.05), border: `1px solid ${hexToRgba(COLORS.theme, 0.3)}` }}>
-                                <div style={{ 
-                                    display: 'inline-block', 
-                                    border: `1px solid ${COLORS.theme}`, 
-                                    color: COLORS.theme, 
-                                    padding: '2px 8px', 
-                                    fontSize: '0.7rem', 
-                                    fontWeight: 'bold',
-                                    marginBottom: '8px',
-                                }}>
-                                    STATUS: NOMINAL
-                                </div>
-                                <h3 style={{ margin: '0 0 10px 0', color: '#888', fontSize: '1.1rem' }}>
-                                    No major anomalies recorded.
-                                </h3>
-                                <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>
-                                    当日全球轨道运行平稳，未检测到重大碎片事件。
-                                </p>
-                            </div>
-                        )}
+                    {/* 2. 事件标题与地点 */}
+                    <div>
+                        <h2 style={{ 
+                            margin: '0 0 8px 0', color: COLORS.textMain, fontSize: '1.6rem', fontWeight: 'bold',
+                            textShadow: `0 2px 10px ${hexToRgba(COLORS.bgDark, 0.8)}`
+                        }}>
+                            2021年“净空一号”解体事件
+                        </h2>
+                        <div style={{ 
+                            display: 'inline-block',
+                            background: hexToRgba(COLORS.theme, 0.15),
+                            padding: '4px 8px',
+                            borderRadius: '4px'
+                        }}>
+                            <p style={{ margin: 0, color: COLORS.textDim, fontSize: '0.85rem', fontFamily: 'sans-serif' }}>
+                                地点：高度 850km 的太阳同步轨道 (SSO)
+                            </p>
+                        </div>
                     </div>
+
+                    {/* 3. 玻璃描述框 (简单方框造型) */}
+                    <div style={{ 
+                        background: hexToRgba(COLORS.theme, 0.25), 
+                        padding: '24px',
+                        borderRadius: '8px', 
+                        backdropFilter: 'blur(20px)',
+                        border: `1px solid ${hexToRgba(COLORS.theme, 0.3)}`,
+                        boxShadow: `0 8px 20px ${hexToRgba(COLORS.bgDark, 0.6)}`,
+                        maxWidth: '95%'
+                    }}>
+                        <p style={{ margin: 0, color: COLORS.textMain, fontSize: '1rem', lineHeight: '1.6', fontWeight: '400', letterSpacing: '0.5px' }}>
+                            2021年，“净空一号”清理任务因意外爆炸失败，反而制造了4500多块新碎片，
+                            导致850km黄金轨道永久封锁与全球通信瘫痪，这一惨痛教训迫使人类放弃暴
+                            力清理，转向可持续治理。
+                        </p>
+                    </div>
+
                 </div>
             </div>
         </div>
 
         {/* 底部图标 */}
         <div style={{ 
-            position: 'absolute',
-            bottom: '40px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '15px',
-            zIndex: 10,
-            pointerEvents: 'auto',
-            cursor: 'pointer'
+            position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px',
+            zIndex: 10, pointerEvents: 'auto', cursor: 'pointer'
         }}>
            <span style={{ 
-               color: COLORS.textMain, 
-               fontFamily: 'Lexend', 
-               fontSize: '0.75rem', 
-               letterSpacing: '3px',
-               textTransform: 'uppercase',
-               opacity: 0.8
+               color: COLORS.textMain, fontFamily: 'Lexend', fontSize: '1.1rem', fontWeight: 'bold', letterSpacing: '1px'
            }}>
-               Scroll to Explore
+               Scroll To View More
            </span>
            <svg className="arrow-bounce" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g transform="rotate(-30 32 32)">
