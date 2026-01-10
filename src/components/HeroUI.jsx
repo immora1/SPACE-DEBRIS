@@ -88,13 +88,12 @@ export default function HeroUI() {
             </div>
         </header>
 
-        {/* === 左侧核心内容区 (已调整间距和顶部留白) === */}
+        {/* === 左侧核心内容区 === */}
         <div style={{ 
             flex: 1, 
             display: 'flex', 
             alignItems: 'flex-start', 
             paddingLeft: '8vw', 
-            // 🔴 调整 1：增加顶部留白，让内容向下推
             paddingTop: '160px', 
             paddingBottom: '100px', 
             pointerEvents: 'auto',
@@ -122,7 +121,6 @@ export default function HeroUI() {
                 <h1 style={{ 
                     fontFamily: 'Lexend', fontWeight: 900, fontSize: 'clamp(5rem, 8vw, 8.5rem)', 
                     lineHeight: '0.85', color: COLORS.textMain, 
-                    // 🔴 调整 2：压缩标题底部间距
                     margin: '0 0 30px 0', 
                     position: 'relative', zIndex: 0
                 }}>
@@ -136,11 +134,10 @@ export default function HeroUI() {
                     paddingLeft: '25px',
                     display: 'flex',
                     flexDirection: 'column',
-                    // 🔴 调整 3：压缩内部元素间距
                     gap: '15px' 
                 }}>
                     
-                    {/* 1. 日期铭牌 [ | 12 | 02 ] */}
+                    {/* 1. 日期铭牌 */}
                     <div style={{
                         display: 'flex', alignItems: 'center',
                         background: COLORS.theme,
@@ -184,7 +181,7 @@ export default function HeroUI() {
                         </div>
                     </div>
 
-                    {/* 3. 玻璃描述框 (简单方框造型) */}
+                    {/* 3. 玻璃描述框 */}
                     <div style={{ 
                         background: hexToRgba(COLORS.theme, 0.25), 
                         padding: '24px',
@@ -205,17 +202,17 @@ export default function HeroUI() {
             </div>
         </div>
 
-        {/* 底部图标 */}
+        {/* === 底部图标 (向下移动至 10px) === */}
         <div style={{ 
-            position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px',
+            position: 'absolute', 
+            // 🔴 修改：从 40px 改为 10px，大幅向下移，避开上面的蓝色方框
+            bottom: '10px', 
+            left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
             zIndex: 10, pointerEvents: 'auto', cursor: 'pointer'
         }}>
-           <span style={{ 
-               color: COLORS.textMain, fontFamily: 'Lexend', fontSize: '1.1rem', fontWeight: 'bold', letterSpacing: '1px'
-           }}>
-               Scroll To View More
-           </span>
+           
+           {/* 图标 */}
            <svg className="arrow-bounce" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g transform="rotate(-30 32 32)">
                 <path d="M 4 32 A 28 10 0 0 1 60 32" stroke={COLORS.theme} strokeWidth="4" strokeLinecap="round" />
@@ -225,6 +222,19 @@ export default function HeroUI() {
               <path d="M32 22 V42" stroke={COLORS.bgDark} strokeWidth="3" strokeLinecap="round"/>
               <path d="M24 34 L32 42 L40 34" stroke={COLORS.bgDark} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
            </svg>
+
+           {/* 文字 */}
+           <span style={{ 
+               color: COLORS.textMain, 
+               fontFamily: 'Lexend', 
+               fontSize: '0.8rem', 
+               fontWeight: '400',
+               letterSpacing: '1px',
+               opacity: 0.8
+           }}>
+               Scroll To View More
+           </span>
+
         </div>
 
       </section>

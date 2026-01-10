@@ -1,19 +1,39 @@
-/* 引入 Google Fonts: Lexend 字体 */
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;700&display=swap');
+/* src/index.css */
 
-/* 全局设置 */
-body, html, #root {
+/* 1. 强制锁死最外层，绝不允许 html 和 body 滚动 */
+html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #080808; /* 这里就是你选的深空黑 */
-  color: #F4F4F0; /* 默认字体颜色：粉笔白 */
-  font-family: 'Lexend', sans-serif; /* 全局使用 Lexend 字体 */
-  overflow: hidden; /* 防止出现双重滚动条 */
+  width: 100vw;  /* 强制宽度 */
+  height: 100vh; /* 强制高度为屏幕高度 */
+  overflow: hidden !important; /* !important 强制覆盖所有默认行为 */
+  background-color: #000;
 }
 
-/* 这是一个小技巧，让Canvas层在后面，HTML层在上面 */
+/* 2. 只允许 #root 这一层进行滚动 */
 #root {
-  position: relative;
+  width: 100vw;
+  height: 100vh; /* 必须占满屏幕 */
+  overflow-y: auto !important; /* 强制开启垂直滚动 */
+  overflow-x: hidden; /* 禁止水平滚动 */
+  position: absolute; /* 绝对定位，防止被其他因素挤压 */
+  top: 0;
+  left: 0;
+}
+
+/* --- 极简滚动条样式保持不变 --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15); 
+  border-radius: 4px; 
+  transition: all 0.3s ease; 
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2ECC71; 
+  cursor: pointer;
 }
