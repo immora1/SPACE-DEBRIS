@@ -1,62 +1,73 @@
-import { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { ScrollControls, Scroll, Float } from '@react-three/drei';
+import { ScrollControls, Scroll, Float, Loader } from '@react-three/drei';
 
-// 引入所有组件
 import HeroScene from './components/HeroScene';
 import HeroUI from './components/HeroUI';
 import OrbitScene from './components/OrbitScene';
 import OrbitUI from './components/OrbitUI';
+import EventWheel from './components/EventWheel';
 
 export default function App() {
-  // 状态管理：当前选中的轨道
   const [currentOrbit, setCurrentOrbit] = useState('LEO');
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#080808' }}>
+    <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
       
       <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
-        
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} intensity={1} color="#FF6B00" />
-
-        {/* 🔴 核心修复：pages={2} 
-            这就告诉浏览器：“我有两屏的内容”，滚动条才会出现！
-        */}
-        <ScrollControls pages={8} damping={0.3}>
-          
-          {/*Layer A: 3D 场景层 */}
-          <Scroll>
-            {/* 第一页：漂浮的大地球 */}
-            <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-              <HeroScene />
-            </Float>
+        
+        <Suspense fallback={null}>
+            <ScrollControls pages={8} damping={0.3}>
             
-            {/* 第二页：你的新俯视轨道模型 */}
-            {/* 🔴 位置修复：y={-6} 确保它刚好在第二屏中间 */}
-            <group position={[0, -6, 0]}> 
-               <OrbitScene currentOrbit={currentOrbit} setOrbitState={setCurrentOrbit} />
-            </group>
-          </Scroll>
+              {/* === Layer A: 3D 场景层 === */}
+              <Scroll>
+                
+                {/* 第 1 页: 大地球 */}
+                <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+                   <HeroScene />
+                </Float>
+                
+                {/* 🔴 核心修改 1：位置下调到 -8.75 (对应 175vh) */}
+                <group position={[0, -8.75, 0]}> 
+                    <OrbitScene currentOrbit={currentOrbit} setOrbitState={setCurrentOrbit} />
+                </group>
 
-          {/* Layer B: HTML UI 层 */}
-          <Scroll html style={{ width: '100%', height: '100%' }}>
-            
-            {/* 第一页 UI */}
-            <div style={{ height: '100vh', width: '100vw' }}>
-              <HeroUI />
-            </div>
+              </Scroll>
 
-            {/* 第二页 UI */}
-            {/* 🔴 布局修复：强制顶到第二页 (top: 100vh) */}
-            <div style={{ position: 'absolute', top: '100vh', width: '100vw', height: '100vh' }}>
-              <OrbitUI currentOrbit={currentOrbit} />
-            </div>
+              {/* === Layer B: HTML UI 层 === */}
+              <Scroll html style={{ width: '100%', height: '100%' }}>
+                
+                {/* 第 1 页 UI */}
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh' }}>
+                  <HeroUI />
+                </div>
 
-          </Scroll>
-          
-        </ScrollControls>
+                {/* 🔴 核心修改 2：UI 容器设为 175vh (即 2.75 页的位置) */}
+                <div style={{ 
+                    position: 'absolute',
+                    top: '200vh', 
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    overflow: 'visible' 
+                }}>
+                  
+                  {/* 摩天轮 */}
+                  <EventWheel currentOrbit={currentOrbit} />
+
+                  {/* 底部轨道卡片 */}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                      <OrbitUI currentOrbit={currentOrbit} />
+                  </div>
+                </div>
+
+              </Scroll>
+            </ScrollControls>
+        </Suspense>
       </Canvas>
+      <Loader />
     </div>
   );
 }
