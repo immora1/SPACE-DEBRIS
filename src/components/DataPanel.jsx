@@ -1,165 +1,166 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
+
+// === 1. 核心数据源：年度累计 (1957-2025) ===
+const KEY_EVENTS = [
+  { year: 1957, val: 1, event: "Sputnik 1 发射" },
+  { year: 1961, val: 300, event: "首次卫星解体" },
+  { year: 1970, val: 2000, event: "太空竞赛高峰" },
+  { year: 1980, val: 4600, event: "航天常态化" },
+  { year: 1990, val: 7500, event: "老旧卫星积累" },
+  { year: 2000, val: 9100, event: "ISS 时代" },
+  { year: 2007, val: 12500, event: "反卫星测试(CN)" },
+  { year: 2009, val: 14200, event: "Iridium 碰撞" },
+  { year: 2015, val: 17800, event: "商业航天起步" },
+  { year: 2021, val: 23000, event: "反卫星测试(RU)" },
+  { year: 2024, val: 39200, event: "星链爆发" },
+  { year: 2025, val: 43500, event: "LEO 拥堵" }
+];
+
+const generateYearlyData = () => {
+  let fullData = [];
+  for (let i = 0; i < KEY_EVENTS.length - 1; i++) {
+    const start = KEY_EVENTS[i];
+    const end = KEY_EVENTS[i+1];
+    const steps = end.year - start.year;
+    fullData.push({ year: start.year, val: start.val, event: start.event });
+    for (let j = 1; j < steps; j++) {
+      const currYear = start.year + j;
+      const currVal = Math.round(start.val + (end.val - start.val) * (j / steps));
+      fullData.push({ year: currYear, val: currVal, event: null });
+    }
+  }
+  const last = KEY_EVENTS[KEY_EVENTS.length - 1];
+  fullData.push({ year: last.year, val: last.val, event: last.event });
+  return fullData;
+};
+const YEARLY_DATA = generateYearlyData();
+
+// === 2. 国家数据 ===
+const COUNTRY_DATA = [
+  { name: 'USA', count: 25786, color: '#fff' },
+  { name: 'RUSSIA', count: 25144, color: '#FF6B00' },
+  { name: 'CHINA', count: 8774, color: '#5456F0' },
+  { name: 'FRANCE', count: 1471, color: '#999' },
+  { name: 'INDIA', count: 758, color: '#666' }
+];
 
 export default function DataPanel() {
+  const [hoverData, setHoverData] = useState(null);
+
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-      color: '#fff'
+      width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', color: '#fff'
     }}>
-      {/* 居中容器 */}
+      
+      {/* 🔴【控制点 1】：这里控制 4 个板块的总大小 */}
       <div style={{
-        width: '90vw',
-        maxWidth: '1200px',
-        height: '80vh',
-        display: 'grid',
-        gridTemplateColumns: '1fr 60px 1fr', // 左卡片 - 中轴 - 右卡片
-        gridTemplateRows: '1fr 1fr',         // 上排 - 下排
-        gap: '20px',
-        position: 'relative'
+        // 1. 宽度控制：可以使用百分比 (85vw) 或 像素 (1200px)
+        width: '85vw', 
+        maxWidth: '1200px', 
+        
+        // 2. 比例/高度控制：
+        // 方案A：锁定比例 (推荐) -> 改这个 '3 / 2' 可以变扁或变方
+        aspectRatio: '3 / 2', 
+        // 方案B：锁定高度 (如果不想用比例) -> 删除 aspectRatio，打开 height
+        // height: '800px', 
+
+        display: 'grid', 
+        gridTemplateColumns: '1fr 1fr', 
+        gridTemplateRows: '1fr 1fr',    
+        gap: '24px', 
+        boxSizing: 'border-box'
       }}>
         
-        {/* === 装饰：中轴连接器 (对应原型图中间的圆形连接) === */}
-        <div style={{ gridColumn: '2 / 3', gridRow: '1 / 3', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-             <div style={{ width: '2px', height: '100%', background: 'rgba(255,255,255,0.1)' }}></div>
-             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#1a1a1a', border: '2px solid #5456F0', position: 'absolute', top: '20%' }}></div>
-             <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#1a1a1a', border: '2px solid #FF6B00', position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: 2 }}></div>
-             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#1a1a1a', border: '2px solid #5456F0', position: 'absolute', bottom: '20%' }}></div>
-        </div>
-
         {/* === 板块 1: 趋势图 (左上) === */}
         <div style={cardStyle}>
           <div style={headerStyle}>
             <div style={dotStyle('#FF6B00')}></div>
             <div>
-              <h3 style={titleStyle}>碎片指数级增长趋势</h3>
-              <p style={subTitleStyle}>EXPONENTIAL GROWTH OF DEBRIS</p>
-            </div>
-          </div>
-          {/* 纯 CSS/SVG 折线图 */}
-          <div style={{ flex: 1, position: 'relative', marginTop: '20px', borderLeft: '1px solid #333', borderBottom: '1px solid #333' }}>
-             <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                {/* 趋势线 */}
-                <polyline 
-                   points="0,90 20,85 40,80 60,60 80,30 100,10" 
-                   fill="none" 
-                   stroke="#FF6B00" 
-                   strokeWidth="2" 
-                   vectorEffect="non-scaling-stroke"
-                />
-                {/* 填充区域 */}
-                <polygon 
-                   points="0,90 20,85 40,80 60,60 80,30 100,10 100,100 0,100" 
-                   fill="url(#gradientOrange)" 
-                   opacity="0.3"
-                />
-                <defs>
-                  <linearGradient id="gradientOrange" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#FF6B00" />
-                    <stop offset="100%" stopColor="transparent" />
-                  </linearGradient>
-                </defs>
-             </svg>
-             <span style={{ position: 'absolute', bottom: '-20px', left: '0', fontSize: '10px', color: '#666' }}>1957</span>
-             <span style={{ position: 'absolute', bottom: '-20px', right: '0', fontSize: '10px', color: '#666' }}>2025</span>
-          </div>
-          <p style={{ marginTop: '10px', fontSize: '0.8rem', color: '#888', lineHeight: '1.4' }}>
-            自1957年第一颗卫星发射以来，轨道物体数量呈爆发式增长。目前追踪到的碎片仅是冰山一角，且并没有放缓的迹象。
-          </p>
-        </div>
-
-        {/* === 板块 2: 国家责任 (右上) === */}
-        <div style={cardStyle}>
-           <div style={headerStyle}>
-            <div style={dotStyle('#5456F0')}></div>
-            <div>
-              <h3 style={titleStyle}>主要国家碎片产生量</h3>
-              <p style={subTitleStyle}>DEBRIS BY MAJOR SPACEFARING NATIONS</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-              <BarRow label="RUSSIA (CIS)" percent="35%" count="7,032+" color="#fff" />
-              <BarRow label="USA" percent="32%" count="5,500+" color="#ccc" />
-              <BarRow label="CHINA" percent="28%" count="3,800+" color="#999" />
-              <BarRow label="FRANCE" percent="5%" count="500+" color="#666" />
-          </div>
-          <p style={{ marginTop: '20px', fontSize: '0.8rem', color: '#888' }}>
-             历史航天活动遗留的火箭残骸和反卫星测试是主要来源。太空环境治理需要大国的共同责任。
-          </p>
-        </div>
-
-        {/* === 板块 3: 碎片来源与尺寸 (左下) === */}
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={dotStyle('#00FF00')}></div>
-            <div>
-              <h3 style={titleStyle}>致命的“隐形子弹”</h3>
-              <p style={subTitleStyle}>SOURCE AND SIZE OF FRAGMENTS</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '60%', marginTop: '10px' }}>
-              {/* 大碎片 */}
-              <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: '80px', height: '80px', border: '1px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-                     <div style={{ width: '60%', height: '60%', background: '#fff', clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)' }}></div>
-                  </div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>3.6万+</div>
-                  <div style={{ fontSize: '0.8rem', color: '#888' }}>&gt; 10cm</div>
-                  <div style={{ fontSize: '0.7rem', color: '#666' }}>(可追踪)</div>
-              </div>
-              {/* 中碎片 */}
-              <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: '60px', height: '60px', border: '1px solid #FF6B00', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-                     <div style={{ width: '50%', height: '50%', background: '#FF6B00', borderRadius: '50%' }}></div>
-                  </div>
-                   <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FF6B00' }}>100万+</div>
-                  <div style={{ fontSize: '0.8rem', color: '#888' }}>1cm - 10cm</div>
-                  <div style={{ fontSize: '0.7rem', color: '#666' }}>(致命且难追踪)</div>
-              </div>
-              {/* 小碎片 */}
-              <div style={{ textAlign: 'center' }}>
-                  <div style={{ width: '40px', height: '40px', border: '1px solid #5456F0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-                      <div style={{ width: '4px', height: '4px', background: '#5456F0', borderRadius: '50%' }}></div>
-                      <div style={{ width: '4px', height: '4px', background: '#5456F0', borderRadius: '50%', marginLeft:'4px' }}></div>
-                  </div>
-                   <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#5456F0' }}>1.3亿+</div>
-                  <div style={{ fontSize: '0.8rem', color: '#888' }}>&lt; 1cm</div>
-                  <div style={{ fontSize: '0.7rem', color: '#666' }}>(无法屏蔽)</div>
-              </div>
-          </div>
-        </div>
-
-        {/* === 板块 4: 核心数据危机 (右下) === */}
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={dotStyle('#fff')}></div>
-            <div>
-              <h3 style={titleStyle}>极速撞击动能</h3>
-              <p style={subTitleStyle}>HYPERVELOCITY IMPACT DATA</p>
+              <h3 style={titleStyle}>太空垃圾数量趋势</h3>
+              <p style={subTitleStyle}>TREND OF YEARLY SPACE DEBRIS</p>
             </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
-              <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '5px' }}>平均相对撞击速度</div>
-                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: '#fff', lineHeight: '1' }}>
-                      7.8 <span style={{ fontSize: '1rem', fontWeight: '400', color: '#FF6B00' }}>km/s</span>
+          <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: 0, display:'flex', flexDirection:'column' }}>
+             
+             {/* 🔴【控制点 2】：这里单独控制曲线图的大小 */}
+             <div style={{ 
+                 flex: 1,               // 默认充满剩余空间
+                 width: '100%',         // 宽度：通常是 100%
+                 
+                 // 如果你想强制压缩高度，可以在这里加 padding 或 height
+                 // height: '200px', 
+                 // marginTop: '20px', 
+                 
+                 position: 'relative' 
+             }}>
+                <SmoothLineChart data={YEARLY_DATA} hoverData={hoverData} setHoverData={setHoverData} />
+                
+                {/* Tooltip */}
+                {hoverData && (
+                  <div style={tooltipStyle(hoverData.x, hoverData.y - 15)}>
+                    <div style={{ fontWeight: 'bold', fontSize:'0.9rem' }}>{hoverData.year}</div>
+                    <div style={{ color: '#FF6B00', fontSize:'0.8rem' }}>{hoverData.val.toLocaleString()} <span style={{fontSize:'0.6rem', color:'#888'}}>TOTAL</span></div>
+                    {hoverData.event && <div style={{fontSize:'0.6rem', color:'#ccc', borderTop:'1px solid #444', marginTop:'2px', paddingTop:'2px'}}>{hoverData.event}</div>}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>是子弹速度的 10 倍</div>
+                )}
+             </div>
+          </div>
+        </div>
+
+        {/* === 板块 2: 国家数据 (右上) === */}
+        <div style={cardStyle}>
+           <div style={headerStyle}>
+            <div style={dotStyle('#fff')}></div>
+            <div>
+              <h3 style={titleStyle}>国家产生垃圾数</h3>
+              <p style={subTitleStyle}>DEBRIS GENERATED BY COUNTRIES</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', flex: 1, padding: '10px 0' }}>
+              {COUNTRY_DATA.map((item, idx) => (
+                <BarRow key={idx} label={item.name} count={item.count} max={30000} color={item.color} />
+              ))}
+          </div>
+        </div>
+
+        {/* === 板块 3: 碎片来源 (左下) === */}
+        <div style={cardStyle}>
+          <div style={headerStyle}>
+            <div style={dotStyle('#5456F0')}></div>
+            <div>
+              <h3 style={titleStyle}>碎片来源</h3>
+              <p style={subTitleStyle}>SOURCE AND SIZE OF FRAGMENTS</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: 1, padding: '0 20px' }}>
+              <HexagonStat val="1.3亿" label="< 1cm" color="#5456F0" scale={0.9} shape="poly1" />
+              <HexagonStat val="100万" label="1-10cm" color="#FF6B00" scale={1} shape="poly2" />
+              <HexagonStat val="3.6万" label="> 10cm" color="#fff" scale={1.1} shape="poly3" />
+          </div>
+        </div>
+
+        {/* === 板块 4: 碎片数据 (右下) === */}
+        <div style={cardStyle}>
+          <div style={headerStyle}>
+            <div style={dotStyle('#FF0000')}></div>
+            <div>
+              <h3 style={titleStyle}>碎片数据</h3>
+              <p style={subTitleStyle}>DEBRIS GENERATED BY COUNTRIES</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1, padding: '0 20px' }}>
+              <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: '#fff' }}>1.3亿</div>
+                  <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '5px' }}>微小碎片总量</div>
               </div>
-              <div style={{ width: '1px', height: '60px', background: '#333' }}></div>
-              <div style={{ flex: 1, paddingLeft: '20px' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '5px' }}>小于1cm碎片总量</div>
-                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: '#fff', lineHeight: '1' }}>
-                      1.3 <span style={{ fontSize: '1rem', fontWeight: '400', color: '#5456F0' }}>亿颗</span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>笼罩地球的钢铁迷雾</div>
+              <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: '#fff' }}>7.5<span style={{fontSize:'1.5rem'}}>km/s</span></div>
+                  <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '5px' }}>平均撞击速度</div>
               </div>
           </div>
+          <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: 'auto' }}></div>
         </div>
 
       </div>
@@ -167,57 +168,129 @@ export default function DataPanel() {
   );
 }
 
-// === 子组件与样式 ===
+// === 组件：平滑曲线图 ===
+const SmoothLineChart = ({ data, hoverData, setHoverData }) => {
+  const containerRef = useRef(null);
+  
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left; 
+    const width = rect.width;
+    if (x < 0 || x > width) return;
+    const index = Math.round((x / width) * (data.length - 1));
+    const d = data[index];
+    
+    const yPercent = getY(d.val); 
+    const pxY = (yPercent / 100) * rect.height;
+    if (d) setHoverData({ x: (index / (data.length - 1)) * width, y: pxY, year: d.year, val: d.val, event: d.event });
+  };
 
-const BarRow = ({ label, percent, count, color }) => (
-    <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.8rem' }}>
-        <div style={{ width: '80px', color: '#888' }}>{label}</div>
-        <div style={{ flex: 1, height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', margin: '0 10px', overflow: 'hidden' }}>
-            <div style={{ width: percent, height: '100%', background: color, borderRadius: '4px' }}></div>
+  // 🔴【控制点 3】：控制曲线的高度占比
+  // 当前：100 - (val / 45000) * 80
+  // * 80 表示最高点只占容器高度的 80% (留出 20% 顶部呼吸空间)
+  // 如果想更扁，把 80 改小 (例如 60)
+  // 如果想更满，把 80 改大 (例如 95)
+  const getY = (val) => 100 - (val / 45000) * 80; 
+
+  const pointsStr = data.map((d, i) => `${(i / (data.length - 1)) * 100},${getY(d.val)}`).join(' ');
+  const pathD = `M ${pointsStr}`;
+
+  return (
+    <div 
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoverData(null)}
+    >
+      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="gradOrange" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#FF6B00" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        
+        <line x1="0" y1={getY(20000)} x2="100" y2={getY(20000)} stroke="#333" strokeWidth="0.5" strokeDasharray="2" />
+        <line x1="0" y1={getY(40000)} x2="100" y2={getY(40000)} stroke="#333" strokeWidth="0.5" strokeDasharray="2" />
+
+        <path d={`${pathD} L 100,100 L 0,100 Z`} fill="url(#gradOrange)" />
+        <path d={pathD} fill="none" stroke="#FF6B00" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        
+        {hoverData && (
+           <line x1={(data.findIndex(d => d.year === hoverData.year) / (data.length - 1)) * 100} y1="0" x2={(data.findIndex(d => d.year === hoverData.year) / (data.length - 1)) * 100} y2="100" stroke="rgba(255,255,255,0.3)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        )}
+        {hoverData && (
+            <circle cx={(data.findIndex(d => d.year === hoverData.year) / (data.length - 1)) * 100} cy={getY(hoverData.val)} r="2" fill="#fff" stroke="#FF6B00" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+        )}
+      </svg>
+      <div style={{ position: 'absolute', bottom: 0, width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', color: '#666' }}>
+          <span>1957</span>
+          <span>2025</span>
+      </div>
+    </div>
+  );
+};
+
+// === 样式与辅助组件 ===
+
+const tooltipStyle = (left, topOffset) => ({
+  position: 'absolute', left: left, top: topOffset,
+  transform: 'translate(-50%, -50%)',
+  background: 'rgba(20, 20, 20, 0.95)', padding: '6px 10px', borderRadius: '4px',
+  border: '1px solid rgba(255, 107, 0, 0.3)', pointerEvents: 'none', zIndex: 20,
+  minWidth: '100px', textAlign: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
+  whiteSpace: 'nowrap'
+});
+
+const BarRow = ({ label, count, max, color }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+        <div style={{ width: '100%', height: '14px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', position: 'relative' }}>
+            <div style={{ width: `${Math.min((count/max)*100, 100)}%`, height: '100%', background: color, borderRadius: '2px' }}></div>
+            <div style={{ position: 'absolute', left: '5px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.7rem', color: '#fff', textShadow: '0 0 2px #000', fontWeight: 'bold', pointerEvents: 'none' }}>
+                {label}
+            </div>
+             <div style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.7rem', color: '#fff', textShadow: '0 0 2px #000', fontFamily: 'monospace' }}>
+                {count.toLocaleString()}
+            </div>
         </div>
-        <div style={{ width: '50px', textAlign: 'right', color: '#fff' }}>{count}</div>
     </div>
 );
 
+const HexagonStat = ({ val, label, color, scale, shape }) => {
+    const clipPath = shape === 'poly1' 
+        ? 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)' 
+        : shape === 'poly2' 
+        ? 'polygon(0% 20%, 100% 0%, 100% 80%, 0% 100%)' 
+        : 'polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%)';
+
+    return (
+      <div style={{ transform: `scale(${scale})`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ 
+              width: '80px', height: '60px', 
+              background: `rgba(255,255,255,0.1)`,
+              border: `1px solid ${color}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              clipPath: clipPath,
+              marginBottom: '10px'
+          }}>
+              <div style={{ width: '40%', height: '40%', background: color, opacity: 0.8, clipPath: clipPath }}></div>
+          </div>
+          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>{val}</div>
+          <div style={{ fontSize: '0.8rem', color: '#888' }}>{label}</div>
+      </div>
+    );
+};
+
 const cardStyle = {
-    background: 'rgba(20, 20, 20, 0.6)',
-    backdropFilter: 'blur(10px)',
+    background: 'rgba(30, 30, 30, 0.9)', 
     border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '16px',
-    padding: '30px',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+    borderRadius: '8px', 
+    padding: '24px', 
+    display: 'flex', flexDirection: 'column',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
 };
-
-const headerStyle = {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '10px',
-    marginBottom: '10px'
-};
-
-const titleStyle = {
-    margin: 0,
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    letterSpacing: '1px'
-};
-
-const subTitleStyle = {
-    margin: 0,
-    fontSize: '0.6rem',
-    color: '#666',
-    letterSpacing: '2px',
-    marginTop: '4px',
-    textTransform: 'uppercase'
-};
-
-const dotStyle = (color) => ({
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-    background: color,
-    marginTop: '4px',
-    boxShadow: `0 0 10px ${color}`
-});
+const headerStyle = { display: 'flex', gap: '10px', marginBottom: '15px', alignItems: 'center' };
+const titleStyle = { margin: 0, fontSize: '0.9rem', fontWeight: 'bold', letterSpacing: '0.5px', color: '#fff', textTransform: 'uppercase' };
+const subTitleStyle = { margin: 0, fontSize: '0.55rem', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' };
+const dotStyle = (color) => ({ width: '8px', height: '8px', borderRadius: '50%', background: color, boxShadow: `0 0 10px ${color}` });
