@@ -7,6 +7,7 @@ import HeroUI from './components/HeroUI';
 import OrbitScene from './components/OrbitScene';
 import OrbitUI from './components/OrbitUI';
 import EventWheel from './components/EventWheel';
+import DataPanel from './components/DataPanel'; // 1. 引入新组件
 
 export default function App() {
   const [currentOrbit, setCurrentOrbit] = useState('LEO');
@@ -19,48 +20,54 @@ export default function App() {
         <directionalLight position={[5, 5, 5]} intensity={1} color="#FF6B00" />
         
         <Suspense fallback={null}>
-            <ScrollControls pages={8} damping={0.3}>
+            {/* 2. 页面总数改为 9，为数据面板腾出第 4 页的空间 */}
+            <ScrollControls pages={9} damping={0.3}>
             
               {/* === Layer A: 3D 场景层 === */}
               <Scroll>
-                
-                {/* 第 1 页: 大地球 */}
                 <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
                    <HeroScene />
                 </Float>
                 
-                {/* 🔴 核心修改 1：位置下调到 -8.75 (对应 175vh) */}
                 <group position={[0, -8.75, 0]}> 
                     <OrbitScene currentOrbit={currentOrbit} setOrbitState={setCurrentOrbit} />
                 </group>
-
               </Scroll>
 
               {/* === Layer B: HTML UI 层 === */}
               <Scroll html style={{ width: '100%', height: '100%' }}>
                 
-                {/* 第 1 页 UI */}
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh' }}>
                   <HeroUI />
                 </div>
 
-                {/* 🔴 核心修改 2：UI 容器设为 175vh (即 2.75 页的位置) */}
+                {/* 摩天轮与轨道切换 (2.75 页) */}
                 <div style={{ 
                     position: 'absolute',
-                    top: '200vh', 
+                    top: '175vh', 
                     left: 0,
                     width: '100vw',
                     height: '100vh',
                     overflow: 'visible' 
                 }}>
-                  
-                  {/* 摩天轮 */}
-                  <EventWheel currentOrbit={currentOrbit} />
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }}>
+                      <EventWheel currentOrbit={currentOrbit} />
+                  </div>
 
-                  {/* 底部轨道卡片 */}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 999 }}>
                       <OrbitUI currentOrbit={currentOrbit} />
                   </div>
+                </div>
+
+                {/* 🔴 3. 新增数据面板 (放在第 4.5 页左右，即 350vh) */}
+                <div style={{
+                    position: 'absolute',
+                    top: '350vh', // 让它出现在摩天轮之后
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh'
+                }}>
+                    <DataPanel />
                 </div>
 
               </Scroll>
