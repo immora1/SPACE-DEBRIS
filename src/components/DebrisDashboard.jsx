@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 
-// === ⚙️ 布局调节配置 (保留您的修改) ===
+// === ⚙️ 布局调节配置 ===
 const LAYOUT_CONFIG = {
   // 板块三：整体内容距离标题顶部的距离
   CONTENT_OFFSET_TOP: '50px', 
@@ -65,35 +65,10 @@ const SOURCES = [
 // === 通用标题组件 ===
 const SectionTitle = ({ zh, en }) => (
   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '20px' }}>
-    <div style={{ 
-        marginTop: '12px', 
-        width: '12px', height: '12px', 
-        background: THEME.primary, 
-        borderRadius: '50%', 
-        boxShadow: `0 0 10px ${THEME.primary}` 
-    }}></div>
-    
+    <div style={{ marginTop: '12px', width: '12px', height: '12px', background: THEME.primary, borderRadius: '50%', boxShadow: `0 0 10px ${THEME.primary}` }}></div>
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <span style={{ 
-          fontSize: '2.0rem', 
-          fontWeight: '900', 
-          color: '#fff', 
-          lineHeight: '1.1',
-          letterSpacing: '2px'
-      }}>
-        {zh}
-      </span>
-      <span style={{ 
-          fontSize: '0.9rem', 
-          fontWeight: '600', 
-          color: '#fff', 
-          opacity: 0.8,  
-          letterSpacing: '2px',
-          textTransform: 'uppercase',
-          marginTop: '6px'
-      }}>
-        {en}
-      </span>
+      <span style={{ fontSize: '2.0rem', fontWeight: '900', color: '#fff', lineHeight: '1.1', letterSpacing: '2px' }}>{zh}</span>
+      <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#fff', opacity: 0.8, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '6px' }}>{en}</span>
     </div>
   </div>
 );
@@ -166,26 +141,13 @@ export default function DebrisDashboard() {
   return (
     <div style={containerStyle}>
 
-      {/* 🔴 背景: 暴力加粗的白色抖动十字 */}
+      {/* 🔴 背景: 纯净的白色加粗十字 */}
       <svg style={{ position: 'absolute', width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
-        <defs>
-          <filter id="tremble">
-            {/* baseFrequency 保持低频，保证线条连贯 */}
-            <feTurbulence type="fractalNoise" baseFrequency="0.01 0.005" numOctaves="2" result="noise" seed="0">
-                <animate attributeName="baseFrequency" dur="0.2s" values="0.01 0.005;0.015 0.009;0.01 0.005" repeatCount="indefinite" />
-            </feTurbulence>
-            {/* scale 降到 4，防止撕裂过大 */}
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" />
-          </filter>
-        </defs>
+        {/* 垂直粗线 */}
+        <line x1="50%" y1="-10%" x2="50%" y2="110%" stroke="white" strokeWidth="10" opacity="0.6" />
         
-        {/* 1. 光晕层：极粗，带一点点蓝色，增加体积感 */}
-        <line x1="50%" y1="-10%" x2="50%" y2="110%" stroke={THEME.primary} strokeWidth="20" filter="url(#tremble)" opacity="0.3" />
-        <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke={THEME.primary} strokeWidth="20" filter="url(#tremble)" opacity="0.3" />
-
-        {/* 2. 核心层：白色，加粗到 12 */}
-        <line x1="50%" y1="-10%" x2="50%" y2="110%" stroke="white" strokeWidth="12" filter="url(#tremble)" opacity="0.9" />
-        <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke="white" strokeWidth="12" filter="url(#tremble)" opacity="0.9" />
+        {/* 水平粗线 */}
+        <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke="white" strokeWidth="10" opacity="0.6" />
         
         {/* 中心锚点 */}
         <circle cx="50%" cy="50%" r="8" fill={THEME.primary} stroke="white" strokeWidth="3" style={{ zIndex: 10 }} />
@@ -197,10 +159,11 @@ export default function DebrisDashboard() {
         gridTemplateColumns: '50% 50%',
         gridTemplateRows: '50% 50%',
         width: '100%', height: '100%',
+        position: 'relative', zIndex: 1
       }}>
 
         {/* 1. 左上: 趋势 */}
-        <div style={{ ...sectionStyle, borderRight: `1px solid ${THEME.grid}`, borderBottom: `1px solid ${THEME.grid}` }}>
+        <div style={{ ...sectionStyle, borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <SectionTitle zh="太空垃圾趋势" en="Debris Trend" />
             
@@ -245,7 +208,7 @@ export default function DebrisDashboard() {
 
 
         {/* 2. 右上: 国家分布 */}
-        <div style={{ ...sectionStyle, borderBottom: `1px solid ${THEME.grid}` }}>
+        <div style={{ ...sectionStyle, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ flex: 1 }}>
             <SectionTitle zh="全球份额分布" en="Global Share" />
             
@@ -272,7 +235,7 @@ export default function DebrisDashboard() {
 
 
         {/* 3. 左下: 来源 */}
-        <div style={{ ...sectionStyle, borderRight: `1px solid ${THEME.grid}` }}>
+        <div style={{ ...sectionStyle, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ flex: 1 }}>
             <SectionTitle zh="碎片来源分析" en="Debris Sources" />
 

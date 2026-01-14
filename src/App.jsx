@@ -32,7 +32,7 @@ export default function App() {
               pages = 6: 保证有足够的长度容纳所有版块
               damping = 0.3: 增加阻尼感，让滚动更像高级网站
             */}
-            <ScrollControls pages={6} damping={0.3}>
+            <ScrollControls pages={8} damping={0.3}>
             
               {/* === Layer A: 3D 场景层 (跟随滚动移动) === */}
               <Scroll>
@@ -77,7 +77,7 @@ export default function App() {
                 {/* --- Page 4: 🔴 新版碎片数据看板 (350vh) --- */}
                 <div style={{ 
                     position: 'absolute', 
-                    top: '350vh', // 第 4 页起始位置
+                    top: '380vh', // 第 4 页起始位置
                     left: 0, 
                     width: '100vw', 
                     height: '100vh' 
@@ -88,7 +88,7 @@ export default function App() {
                 {/* --- Page 5: 历史事故交互图表 (450vh) --- */}
                 <div style={{ 
                     position: 'absolute', 
-                    top: '450vh', // 第 5 页起始位置
+                    top: '500vh', // 第 5 页起始位置
                     left: 0, 
                     width: '100vw', 
                     height: '100vh' 
