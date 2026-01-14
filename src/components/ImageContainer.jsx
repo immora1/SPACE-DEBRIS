@@ -8,7 +8,7 @@ export default function ImageContainer() {
     <div style={{
       // 占满父容器 (也就是整个第四页屏幕)
       width: '100%',
-      height: '120%',
+      height: '110%',
       // 居中对齐
       display: 'flex',
       justifyContent: 'center',
