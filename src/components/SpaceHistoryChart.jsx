@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 
 // === 🎨 核心配色 ===
 const THEME = {
-  primary: '#4C42D7', // 核心蓝
+  primary: '#4C42D7', 
   white: '#FFFFFF',
   grey: '#888888',
   dark: '#050505',
@@ -134,7 +134,8 @@ export default function SpaceHistoryChart() {
     <div style={{ 
         width: '100%', 
         height: '100%', 
-        background: THEME.dark,
+        // 🔴 关键修改 1：背景改为透明，让 3D 碎片透出来
+        background: 'transparent',
         display: 'flex', 
         flexDirection: 'column', 
         justifyContent: 'center', 
@@ -145,22 +146,16 @@ export default function SpaceHistoryChart() {
         boxSizing: 'border-box'
     }}>
 
-      {/* 🔴 核心修复：图片覆盖层 */}
+      {/* 图片覆盖层 (保留叠加效果) */}
       <div style={{ 
           position: 'absolute', 
           top: 0, 
           left: 0, 
           width: '100%', 
           height: '115%', 
-          // 1. 层级调高：20 > 图表的10，确保在图表“上面”
           zIndex: 20,
-          // 2. 关键交互：允许鼠标穿透图片点击下面的图表
           pointerEvents: 'none',
-          // 3. 混合模式：叠加效果 (Screen 模式去黑留亮，适合发光纹理)
-          // 如果觉得太亮，可以去掉这一行，或者改 opacity
           mixBlendMode: 'screen', 
-          
-          // 4. 完美居中布局 (Flexbox)
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
@@ -169,11 +164,10 @@ export default function SpaceHistoryChart() {
             src="/images/chart_bg.png" 
             alt="background"
             style={{ 
-                // 5. 宽度控制：现在 85% 会相对于父容器严格居中
                 width: '85%', 
-                height: 'auto', // 高度自动，保持比例
+                height: 'auto', 
                 objectFit: 'contain',
-                opacity: 0.8 // 稍微透明一点，更有质感
+                opacity: 0.8 
             }}
         />
       </div>
@@ -186,7 +180,7 @@ export default function SpaceHistoryChart() {
       }}></div>
 
       {/* 标题区域 */}
-      <div style={{ width: '100%', textAlign: 'center', marginBottom: '40px', position: 'relative', zIndex: 30 }}>
+      <div style={{ width: '100%', textAlign: 'center', marginBottom: '20px', position: 'relative', zIndex: 30 }}>
           <h2 style={{ 
               color: THEME.white, 
               fontSize: '3rem', 
@@ -210,11 +204,20 @@ export default function SpaceHistoryChart() {
           </p>
       </div>
 
-      {/* SVG 图表层 (zIndex: 10) */}
+      {/* SVG 图表层 */}
+      {/* 🔴 关键修改 2：限制图表最大高度 (maxHeight)，防止把标题顶出屏幕 */}
       <svg 
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`} 
-        style={{ width: '100%', height: 'auto', overflow: 'visible', position: 'relative', zIndex: 10 }}
+        style={{ 
+            width: '100%', 
+            // 限制高度不超过视窗的 60%，保证上下都有空间
+            maxHeight: '60vh', 
+            height: 'auto', 
+            overflow: 'visible', 
+            position: 'relative', 
+            zIndex: 10 
+        }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleSvgLeave}
       >

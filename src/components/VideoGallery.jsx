@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 
-// === 🎨 配色系统 (极简版) ===
+// === 🎨 配色系统 ===
 const THEME = {
   primary: '#4C42D7', // 核心蓝
   white: '#FFFFFF',
+  grey: '#888888',    // 配合 Legacy 风格的灰色
   dark: '#050505',
-  cardBg: '#111111',
+  cardBg: 'rgba(20, 20, 20, 0.95)', // 卡片背景稍微带点透明度，更有质感
 };
 
-// === 📺 视频数据源 (使用本地封面 /covers/1.png - 12.png) ===
+// === 📺 视频数据源 (保持不变) ===
 const ROW_1_DATA = [
   {
     id: 101,
@@ -116,14 +117,16 @@ const VideoCard = ({ data }) => {
         height: '240px',
         marginRight: '30px', 
         textDecoration: 'none',
-        background: '#1a1a1a', // 纯色深黑背景，无渐变
-        borderRadius: '0px',   // 极简风格：直角 (如果你喜欢圆角可改为 8px)
+        background: THEME.cardBg, // 使用微透明背景
+        borderRadius: '0px',   
         overflow: 'hidden',
-        // 极简边框：平时微弱白，悬停变核心蓝
+        // 边框：平时微弱，悬停高亮
         border: `1px solid ${hover ? THEME.primary : 'rgba(255,255,255,0.1)'}`,
         transition: 'all 0.3s ease',
         transform: hover ? 'translateY(-4px)' : 'translateY(0)',
-        flexShrink: 0 
+        flexShrink: 0,
+        // 添加一点投影，让卡片从3D碎片背景中浮现出来
+        boxShadow: hover ? '0 20px 40px rgba(0,0,0,0.8)' : '0 10px 20px rgba(0,0,0,0.5)'
       }}
     >
       {/* 图片部分 */}
@@ -134,11 +137,11 @@ const VideoCard = ({ data }) => {
           style={{ 
             width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9,
             transition: 'transform 0.5s ease',
-            transform: hover ? 'scale(1.02)' : 'scale(1)' // 极简微动效
+            transform: hover ? 'scale(1.02)' : 'scale(1)' 
           }}
           onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.style.backgroundColor = '#222'; }}
         />
-        {/* 播放按钮 (纯白简约版) */}
+        {/* 播放按钮 */}
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
           background: 'rgba(0,0,0,0.3)', 
@@ -153,13 +156,15 @@ const VideoCard = ({ data }) => {
       <div style={{ padding: '16px', height: '80px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <h3 style={{ 
           margin: 0, color: '#fff', fontSize: '13px', fontWeight: '500', letterSpacing: '0.5px',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' 
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          fontFamily: '"Lexend", sans-serif'
         }}>
           {data.title}
         </h3>
         <p style={{ 
-          margin: '6px 0 0 0', color: '#666', fontSize: '12px', 
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' 
+          margin: '6px 0 0 0', color: '#888', fontSize: '12px', 
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          fontFamily: '"Lexend", sans-serif'
         }}>
           {data.desc}
         </p>
@@ -185,7 +190,7 @@ const MarqueeRow = ({ data, direction = 'left' }) => {
 
       <div style={{
         display: 'flex',
-        animation: `${direction === 'left' ? 'scrollLeft' : 'scrollRight'} 80s linear infinite`, // 放慢速度，更优雅
+        animation: `${direction === 'left' ? 'scrollLeft' : 'scrollRight'} 80s linear infinite`, 
         animationPlayState: isPaused ? 'paused' : 'running',
         width: 'fit-content'
       }}>
@@ -200,43 +205,53 @@ export default function VideoGallery() {
   return (
     <div style={{
       width: '100%', height: '100%',
-      background: THEME.dark,
+      // 🔴 关键 1：背景透明，让 App.jsx 的 3D 碎片透出来
+      background: 'transparent',
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      fontFamily: '"Lexend", sans-serif'
     }}>
       
-      {/* 第一行：向左滚动 */}
-      <div style={{ marginBottom: '60px' }}>
+      {/* 1. 第一行：向左滚动 */}
+      <div style={{ marginBottom: '40px' }}>
         <MarqueeRow data={ROW_1_DATA} direction="left" />
       </div>
 
-      {/* 🔴 核心修改：极简主义 Slogan */}
+      {/* 🔴 关键 2：重构中间区域，对齐 OrbitLegacy 风格 */}
       <div style={{ 
         width: '100%', 
-        padding: '30px 0',
-        marginBottom: '60px',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        // 极简边框：上下纯色细线
-        borderTop: `1px solid ${THEME.primary}`,
-        borderBottom: `1px solid ${THEME.primary}`,
-        background: 'transparent' // 无背景
+        marginBottom: '40px',
+        position: 'relative'
       }}>
+        
+        {/* 装饰：垂直引线 */}
+        <div style={{ width: '1px', height: '40px', background: `linear-gradient(to bottom, transparent, ${THEME.primary})`, marginBottom: '20px' }}></div>
+
+        {/* 主标题：大字号、粗体、全大写 */}
         <h2 style={{ 
           color: THEME.white, 
-          fontSize: '2rem', // 克制的字号
-          fontWeight: '400', // 纤细字重，更显高级
+          fontSize: 'clamp(2rem, 3vw, 3rem)', // 响应式大字号
+          fontWeight: '900', // 极粗
           margin: 0, 
-          letterSpacing: '3px',
-          fontFamily: '"Lexend", sans-serif',
-          // 无 textShadow，纯净展示
+          letterSpacing: '0.2em', // 宽间距
+          lineHeight: '1.2',
+          textAlign: 'center',
+          textTransform: 'uppercase'
         }}>
-          Turning orbital chaos into conscious clarity.
+          TURNING CHAOS INTO <br />
+          <span style={{ color: THEME.primary }}>CONSCIOUS CLARITY.</span>
         </h2>
+
+        {/* 装饰：底部引线 */}
+        <div style={{ width: '1px', height: '40px', background: `linear-gradient(to top, transparent, ${THEME.primary})`, marginTop: '20px' }}></div>
+
       </div>
 
-      {/* 第二行：向右滚动 */}
+      {/* 3. 第二行：向右滚动 */}
       <div>
         <MarqueeRow data={ROW_2_DATA} direction="right" />
       </div>

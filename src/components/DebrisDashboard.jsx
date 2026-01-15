@@ -135,7 +135,9 @@ export default function DebrisDashboard() {
 
   const containerStyle = {
     width: '100vw', height: '100vh', 
-    background: THEME.dark, color: THEME.white, 
+    // 🔴 关键修复：改为透明，让背后的 3D 碎片透出来
+    background: 'transparent', 
+    color: THEME.white, 
     position: 'relative', overflow: 'hidden',
     fontFamily: '"Lexend", sans-serif'
   };
@@ -165,7 +167,7 @@ export default function DebrisDashboard() {
     <div style={containerStyle}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap');`}</style>
 
-      {/* 背景 */}
+      {/* 背景十字线 */}
       <svg style={{ position: 'absolute', width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
         <line x1="50%" y1="-10%" x2="50%" y2="110%" stroke="white" strokeWidth="2" opacity="0.1" />
         <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke="white" strokeWidth="2" opacity="0.1" />
@@ -274,7 +276,7 @@ export default function DebrisDashboard() {
                       alignItems: 'center', 
                       justifyContent: 'center',
                       // 🔴 关键修改：增加图片底部的间距 (15px -> 30px)
-                      marginBottom: '40px'
+                      marginBottom: '30px'
                   }}>
                     <img 
                         src={src.img} 

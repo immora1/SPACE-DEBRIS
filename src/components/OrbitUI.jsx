@@ -107,7 +107,7 @@ export default function OrbitUI({ currentOrbit }) {
             </div>
 
             <div style={{ 
-                background: 'rgba(255,255,255,0.2)', 
+                background: 'transparent', 
                 backdropFilter: 'blur(4px)',
                 padding: '6px 14px',
                 borderRadius: '6px',
