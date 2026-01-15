@@ -15,6 +15,9 @@ import DebrisDashboard from './components/DebrisDashboard';
 // === 3. 引入历史演变图 (Page 5) ===
 import SpaceHistoryChart from './components/SpaceHistoryChart';
 
+// === 4. 🔴 引入新做的科普视频画廊 (Page 6) ===
+import VideoGallery from './components/VideoGallery';
+
 export default function App() {
   // 轨道状态管理
   const [currentOrbit, setCurrentOrbit] = useState('LEO');
@@ -29,8 +32,8 @@ export default function App() {
         
         <Suspense fallback={null}>
             {/* === 滚动控制配置 ===
-              pages = 6: 保证有足够的长度容纳所有版块
-              damping = 0.3: 增加阻尼感，让滚动更像高级网站
+              pages: 改为 8，确保有足够的空间放下第 6 页的内容
+              damping: 保持 0.3 的丝滑感
             */}
             <ScrollControls pages={8} damping={0.3}>
             
@@ -74,10 +77,10 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* --- Page 4: 🔴 新版碎片数据看板 (350vh) --- */}
+                {/* --- Page 4: 数据看板 (380vh) --- */}
                 <div style={{ 
                     position: 'absolute', 
-                    top: '380vh', // 第 4 页起始位置
+                    top: '380vh', 
                     left: 0, 
                     width: '100vw', 
                     height: '100vh' 
@@ -85,15 +88,26 @@ export default function App() {
                     <DebrisDashboard />
                 </div>
 
-                {/* --- Page 5: 历史事故交互图表 (450vh) --- */}
+                {/* --- Page 5: 历史事故交互图表 (500vh) --- */}
                 <div style={{ 
                     position: 'absolute', 
-                    top: '500vh', // 第 5 页起始位置
+                    top: '500vh', 
                     left: 0, 
                     width: '100vw', 
                     height: '100vh' 
                 }}>
                     <SpaceHistoryChart />
+                </div>
+
+                {/* --- Page 6: 🔴 视频画廊 (620vh) --- */}
+                <div style={{ 
+                    position: 'absolute', 
+                    top: '620vh', // 放在第 5 页之后
+                    left: 0, 
+                    width: '100vw', 
+                    height: '100vh' 
+                }}>
+                    <VideoGallery />
                 </div>
 
               </Scroll>
