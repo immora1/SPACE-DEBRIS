@@ -1,6 +1,14 @@
 import React, { useState, useMemo, useRef } from 'react';
 
-// === 1. 核心数据源 (保持不变) ===
+// === 🎨 核心配色 ===
+const THEME = {
+  primary: '#4C42D7', // 核心蓝
+  white: '#FFFFFF',
+  grey: '#888888',
+  dark: '#050505',
+};
+
+// === 1. 核心数据源 ===
 const EVENTS = [
   { id: 1, year: 1957, duration: 5, severity: 15, title: "Sputnik 1 发射", desc: "人类航天时代的开端。运载火箭末级成为首个大型太空垃圾。" },
   { id: 2, year: 1958, duration: 25, severity: 20, title: "Vanguard 1", desc: "目前在轨最古老的人造物体，预计停留600年。" },
@@ -25,8 +33,6 @@ const EVENTS = [
   { id: 29, year: 2024, duration: 15, severity: 85, title: "Intelsat 33e 解体", desc: "波音通信卫星在GEO轨道突然解体，产生大量碎片。" }
 ];
 
-const COLORS = ['#6155FF', '#231D75', '#4C42D7', '#3026B8'];
-
 // 曲线数据
 const SEVERITY_POINTS = [
     { year: 1957, val: 5 },  { year: 1961, val: 45 }, { year: 1965, val: 15 }, 
@@ -41,10 +47,6 @@ export default function SpaceHistoryChart() {
   const [hoveredCurve, setHoveredCurve] = useState(null); 
   const svgRef = useRef(null);
 
-  // === ⚙️ 调节配置区 ===
-  const IMG_OFFSET_Y = 0; 
-  const IMG_SCALE = '100%'; 
-
   // 尺寸定义
   const width = 1600; 
   const height = 800;
@@ -54,20 +56,19 @@ export default function SpaceHistoryChart() {
   const endYear = 2025; 
   const yearRange = endYear - startYear;
   
-  const paddingLeft = 120; 
-  const availableWidth = width - 210; 
+  // 调整内部绘图边距
+  const paddingLeft = 50; 
+  const availableWidth = width - 100; 
   const pxPerYear = availableWidth / yearRange;
 
   const getX = (year) => paddingLeft + (year - startYear) * pxPerYear;
-  const getY = (val) => centerY - val * 3.8; 
+  const getY = (val) => centerY - val * 3.0; 
 
   const curvePath = useMemo(() => {
-    // 1. 起始点：从屏幕最左侧 (x=0) 开始
     const startX = 0;
     const firstPointY = getY(SEVERITY_POINTS[0].val);
     let d = `M ${startX} ${firstPointY} L ${getX(SEVERITY_POINTS[0].year)} ${firstPointY}`;
 
-    // 绘制贝塞尔曲线
     for (let i = 1; i < SEVERITY_POINTS.length; i++) {
         const curr = SEVERITY_POINTS[i];
         const prev = SEVERITY_POINTS[i-1];
@@ -81,11 +82,8 @@ export default function SpaceHistoryChart() {
         const c2y = y;
         d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x} ${y}`;
     }
-
-    // 2. 结束点：延伸到屏幕最右侧 (x=width)
     const lastPointY = getY(SEVERITY_POINTS[SEVERITY_POINTS.length-1].val);
     d += ` L ${width} ${lastPointY}`;
-
     return d;
   }, []);
 
@@ -118,7 +116,7 @@ export default function SpaceHistoryChart() {
     const targetX = getX(estimatedYear);
     const targetY = getY(interpolatedVal);
 
-    if (Math.abs(mouseY - targetY) < 150 && mouseY < centerY) { 
+    if (Math.abs(mouseY - targetY) < 150 && mouseY < centerY + 100) { 
         setHoveredCurve({
             x: targetX,
             y: targetY,
@@ -130,77 +128,101 @@ export default function SpaceHistoryChart() {
     }
   };
 
-  const handleSvgLeave = () => {
-    setHoveredCurve(null);
-  };
+  const handleSvgLeave = () => { setHoveredCurve(null); };
 
   return (
     <div style={{ 
-        width: '100%', height: '100%', 
-        background: '#050505', 
-        display: 'flex', justifyContent: 'center', alignItems: 'center',
-        position: 'relative', overflow: 'hidden'
+        width: '100%', 
+        height: '100%', 
+        background: THEME.dark,
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        position: 'relative', 
+        overflow: 'hidden',
+        padding: '0 10vw',
+        boxSizing: 'border-box'
     }}>
-      
-      {/* 图片层 */}
-      <img 
-        src="/images/chart_bg.png"
-        alt="Chart Overlay"
-        style={{
-          position: 'absolute',
-          width: IMG_SCALE, 
-          height: 'auto',
-          left: '50%',
-          top: `calc(50% + ${IMG_OFFSET_Y}px)`, 
-          transform: 'translate(-50%, -50%)',
-          zIndex: 20, 
-          mixBlendMode: 'screen', 
-          pointerEvents: 'none'
-        }}
-      />
 
-      {/* 🔴 标题区域修改 */}
-      <div style={{ position: 'absolute', top: '40px', left: '40px', zIndex: 30 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              {/* 蓝色圆点 */}
-              <div style={{ 
-                  width: '18px', 
-                  height: '18px', 
-                  borderRadius: '50%', 
-                  background: '#2E64FF', // 纯正的亮蓝色
-                  boxShadow: '0 0 15px #2E64FF' 
-              }}></div>
-              
-              {/* 标题 */}
-              <h2 style={{ 
-                  color: '#fff', 
-                  margin: 0, 
-                  fontSize: '2rem', // 字体加大
-                  letterSpacing: '3px', 
-                  fontWeight: '900',
-                  fontFamily: 'Arial, sans-serif'
-              }}>ORBIT EVENTS</h2>
-          </div>
-          <p style={{ color: '#2E64FF', fontSize: '0.9rem', marginLeft: '33px', marginTop: '6px', opacity: 0.9, letterSpacing: '1px' }}>
-              IMPACT TIMELINE (1957-2025)
+      {/* 🔴 核心修复：图片覆盖层 */}
+      <div style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          width: '100%', 
+          height: '115%', 
+          // 1. 层级调高：20 > 图表的10，确保在图表“上面”
+          zIndex: 20,
+          // 2. 关键交互：允许鼠标穿透图片点击下面的图表
+          pointerEvents: 'none',
+          // 3. 混合模式：叠加效果 (Screen 模式去黑留亮，适合发光纹理)
+          // 如果觉得太亮，可以去掉这一行，或者改 opacity
+          mixBlendMode: 'screen', 
+          
+          // 4. 完美居中布局 (Flexbox)
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+      }}>
+        <img 
+            src="/images/chart_bg.png" 
+            alt="background"
+            style={{ 
+                // 5. 宽度控制：现在 85% 会相对于父容器严格居中
+                width: '85%', 
+                height: 'auto', // 高度自动，保持比例
+                objectFit: 'contain',
+                opacity: 0.8 // 稍微透明一点，更有质感
+            }}
+        />
+      </div>
+      
+      {/* 顶部连接线 */}
+      <div style={{ 
+          position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '1px', height: '100px', zIndex: 5,
+          background: `linear-gradient(to bottom, ${THEME.primary}, transparent)` 
+      }}></div>
+
+      {/* 标题区域 */}
+      <div style={{ width: '100%', textAlign: 'center', marginBottom: '40px', position: 'relative', zIndex: 30 }}>
+          <h2 style={{ 
+              color: THEME.white, 
+              fontSize: '3rem', 
+              fontWeight: '900', 
+              letterSpacing: '8px',
+              margin: 0,
+              fontFamily: '"Lexend", sans-serif',
+              textTransform: 'uppercase'
+          }}>
+            Orbital <span style={{ color: THEME.primary }}>History</span>
+          </h2>
+          <p style={{ 
+              color: THEME.grey, 
+              fontSize: '0.9rem', 
+              marginTop: '10px', 
+              letterSpacing: '4px', 
+              textTransform: 'uppercase',
+              fontFamily: '"Lexend", sans-serif'
+          }}>
+              Timeline of Impact (1957-2025)
           </p>
       </div>
 
-      {/* SVG层 */}
+      {/* SVG 图表层 (zIndex: 10) */}
       <svg 
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`} 
-        style={{ width: '95%', height: 'auto', maxWidth: '1600px', overflow: 'visible', position: 'relative', zIndex: 10 }}
+        style={{ width: '100%', height: 'auto', overflow: 'visible', position: 'relative', zIndex: 10 }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleSvgLeave}
       >
         <defs>
-             {/* 灰色渐变 */}
-             <linearGradient id="curveGrayFill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#888" stopOpacity="0.4" /> 
-                <stop offset="100%" stopColor="#000" stopOpacity="0" />    
+             <linearGradient id="curveFill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor={THEME.primary} stopOpacity="0.2" /> 
+                <stop offset="100%" stopColor={THEME.dark} stopOpacity="0" />    
             </linearGradient>
-
              <filter id="glow">
                 <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                 <feMerge>
@@ -210,95 +232,63 @@ export default function SpaceHistoryChart() {
             </filter>
         </defs>
 
-        {/* 1. 灰色填充层 */}
         <path 
             d={`${curvePath} L ${width} ${centerY} L 0 ${centerY} Z`} 
-            fill="url(#curveGrayFill)" 
+            fill="url(#curveFill)" 
             stroke="none" 
         />
 
-        {/* 2. 视觉层：白色发光曲线 */}
         <path 
             d={curvePath} 
             fill="none" 
-            stroke="#fff" 
-            strokeWidth="3" 
-            style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.8))' }}
+            stroke={THEME.white} 
+            strokeWidth="2" 
+            style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' }}
         />
 
-        {/* 3. 交互层：透明粗线 */}
-        <path 
-            d={curvePath} 
-            fill="none" 
-            stroke="transparent" 
-            strokeWidth="80" 
-        />
+        <path d={curvePath} fill="none" stroke="transparent" strokeWidth="100" />
 
-        {/* 4. 曲线交互 Tooltip */}
         {hoveredCurve && (
             <g style={{ pointerEvents: 'none' }}>
                 <line 
                     x1={hoveredCurve.x} y1={hoveredCurve.y} 
                     x2={hoveredCurve.x} y2={centerY} 
-                    stroke="rgba(255,255,255,0.4)" strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4"
                 />
-                
-                <circle 
-                    cx={hoveredCurve.x} cy={hoveredCurve.y} r="6" 
-                    fill="#fff" filter="url(#glow)"
-                />
-                
-                <g transform={`translate(${hoveredCurve.x}, ${hoveredCurve.y < 100 ? hoveredCurve.y + 50 : hoveredCurve.y - 50})`}>
-                    <rect 
-                        x="-50" y="-30" width="100" height="30" rx="4"
-                        fill="rgba(0,0,0,0.9)" stroke="#2E64FF" strokeWidth="1"
-                    />
-                    <text 
-                        x="0" y="-10" 
-                        fill="#fff" fontSize="13" textAnchor="middle" alignmentBaseline="middle"
-                        fontWeight="bold"
-                    >
-                        {hoveredCurve.val} / 100
+                <circle cx={hoveredCurve.x} cy={hoveredCurve.y} r="6" fill={THEME.white} filter="url(#glow)" />
+                <g transform={`translate(${hoveredCurve.x}, ${hoveredCurve.y - 60})`}>
+                    <rect x="-60" y="-35" width="120" height="35" rx="2" fill="rgba(20,20,20,0.9)" stroke={THEME.primary} strokeWidth="1" />
+                    <text x="0" y="-12" fill={THEME.white} fontSize="14" textAnchor="middle" fontWeight="bold">
+                        RISK: {hoveredCurve.val}%
                     </text>
-                    <text 
-                        x="0" y="15" 
-                        fill="#aaa" fontSize="11" textAnchor="middle" fontWeight="bold"
-                    >
+                    <text x="0" y="25" fill={THEME.grey} fontSize="12" textAnchor="middle" fontWeight="bold">
                         {Math.floor(hoveredCurve.year)}
                     </text>
                 </g>
             </g>
         )}
 
-        {/* 中轴线 */}
-        <line x1="0" y1={centerY} x2={width} y2={centerY} stroke="rgba(255,255,255,0.3)" strokeWidth="1" strokeDasharray="5 5" />
+        <line x1="0" y1={centerY} x2={width} y2={centerY} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
         
-        {/* 刻度 */}
         {Array.from({ length: yearRange + 1 }).map((_, i) => {
             const year = startYear + i;
             const x = getX(year);
             const isDecade = year % 10 === 0;
             return isDecade ? (
                 <g key={year}>
-                    <line x1={x} y1={centerY} x2={x} y2={centerY + 15} stroke="#fff" strokeWidth="2" />
-                    <text x={x} y={centerY - 10} fill="#fff" fontSize="12" textAnchor="middle" fontFamily="monospace" fontWeight="bold">{year}</text>
+                    <line x1={x} y1={centerY} x2={x} y2={centerY + 15} stroke={THEME.grey} strokeWidth="1" />
+                    <text x={x} y={centerY + 35} fill={THEME.grey} fontSize="12" textAnchor="middle" fontFamily="monospace">{year}</text>
                 </g>
             ) : null;
         })}
 
-        {/* 下半部分：半圆 */}
-        {EVENTS.map((ev, index) => {
+        {EVENTS.map((ev) => {
             const x = getX(ev.year);
-            const radius = (ev.duration * 5) + (ev.severity * 0.3) + 30; 
+            const radius = (ev.duration * 4) + (ev.severity * 0.2) + 20; 
             const isHovered = hoveredEvent && hoveredEvent.id === ev.id;
             const currentRadius = isHovered ? radius * 1.1 : radius;
-            const color = COLORS[index % COLORS.length];
-
-            const d = `
-                M ${x - currentRadius} ${centerY} 
-                A ${currentRadius} ${currentRadius} 0 0 0 ${x + currentRadius} ${centerY} 
-                Z
-            `;
+            
+            const d = `M ${x - currentRadius} ${centerY} A ${currentRadius} ${currentRadius} 0 0 0 ${x + currentRadius} ${centerY} Z`;
 
             return (
                 <g 
@@ -309,60 +299,29 @@ export default function SpaceHistoryChart() {
                 >
                     <path 
                         d={d}
-                        fill={color}
+                        fill={THEME.primary}
                         style={{ 
-                            mixBlendMode: 'normal', 
+                            mixBlendMode: 'screen', 
                             transition: 'all 0.3s ease-out',
-                            opacity: isHovered ? 1 : 0.85, 
-                            filter: isHovered ? 'brightness(1.2) drop-shadow(0 0 20px rgba(97, 85, 255, 0.4))' : 'none'
+                            opacity: isHovered ? 0.9 : 0.3, 
                         }} 
                     />
 
                     {isHovered && (
                         <g>
-                            <line x1={x} y1={centerY - 50} x2={x} y2={centerY + currentRadius + 80} stroke="#fff" strokeWidth="1" strokeDasharray="4 4" />
-                            <circle cx={x} cy={centerY} r="4" fill="#fff" />
-                            <circle cx={x} cy={centerY + currentRadius + 80} r="4" fill="#000" stroke="#fff" strokeWidth="2" />
-                            <circle cx={x} cy={centerY + currentRadius + 80} r="10" fill="none" stroke="#2E64FF" strokeWidth="1" />
-                            
-                            <foreignObject 
-                                x={x > width - 280 ? x - 290 : x + 20} 
-                                y={centerY + currentRadius + 20} 
-                                width="280" height="200" 
-                            >
+                            <line x1={x} y1={centerY} x2={x} y2={centerY + currentRadius + 60} stroke={THEME.white} strokeWidth="1" />
+                            <foreignObject x={x > width - 300 ? x - 320 : x + 20} y={centerY + currentRadius + 20} width="300" height="200">
                                 <div style={{ 
-                                    background: 'rgba(10,10,20,0.95)', 
-                                    border: `1px solid ${color}`, 
-                                    borderLeft: `4px solid ${color}`,
-                                    borderRadius: '4px',
-                                    padding: '16px',
+                                    background: 'rgba(10,10,10,0.95)', 
+                                    border: `1px solid ${THEME.primary}`, 
+                                    padding: '20px',
                                     color: '#fff',
-                                    boxShadow: '0 15px 50px rgba(0,0,0,0.9)',
-                                    fontFamily: 'sans-serif',
-                                    position: 'relative',
-                                    zIndex: 100
+                                    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+                                    fontFamily: 'sans-serif'
                                 }}>
-                                    <div style={{ fontSize: '28px', fontWeight: '900', color: '#fff', lineHeight:'1', marginBottom:'5px' }}>{ev.year}</div>
-                                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: color, marginBottom:'10px', textTransform:'uppercase', letterSpacing:'1px' }}>{ev.title}</div>
-                                    <div style={{ fontSize: '12px', color: '#ddd', lineHeight: '1.6', borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:'10px', marginBottom:'15px', textAlign:'justify' }}>
-                                        {ev.desc}
-                                    </div>
-                                    <div style={{ display:'flex', gap:'10px', borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:'10px' }}>
-                                        <div style={{ flex:1 }}>
-                                            <div style={{ fontSize:'9px', color:'#888', textTransform:'uppercase' }}>Severity</div>
-                                            <div style={{ fontSize:'14px', fontWeight:'bold', color: color }}>{ev.severity}<span style={{fontSize:'10px'}}> / 100</span></div>
-                                            <div style={{ width:'100%', height:'3px', background:'#333', marginTop:'3px' }}>
-                                                <div style={{ width:`${ev.severity}%`, height:'100%', background:color }}></div>
-                                            </div>
-                                        </div>
-                                        <div style={{ flex:1 }}>
-                                            <div style={{ fontSize:'9px', color:'#888', textTransform:'uppercase' }}>Duration</div>
-                                            <div style={{ fontSize:'14px', fontWeight:'bold', color: '#fff' }}>{ev.duration}<span style={{fontSize:'10px'}}> Yrs</span></div>
-                                            <div style={{ width:'100%', height:'3px', background:'#333', marginTop:'3px' }}>
-                                                <div style={{ width:`${Math.min((ev.duration/40)*100, 100)}%`, height:'100%', background:'#fff' }}></div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <div style={{ fontSize: '12px', color: THEME.primary, letterSpacing:'2px', marginBottom:'5px' }}>{ev.year} EVENT</div>
+                                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', marginBottom:'10px' }}>{ev.title}</div>
+                                    <div style={{ fontSize: '13px', color: '#ccc', lineHeight: '1.6' }}>{ev.desc}</div>
                                 </div>
                             </foreignObject>
                         </g>
@@ -371,6 +330,14 @@ export default function SpaceHistoryChart() {
             );
         })}
       </svg>
+
+      {/* 底部连接线 */}
+      <div style={{ 
+          position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '1px', height: '100px', zIndex: 5,
+          background: `linear-gradient(to top, ${THEME.primary}, transparent)` 
+      }}></div>
+
     </div>
   );
 }

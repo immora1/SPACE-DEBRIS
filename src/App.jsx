@@ -11,9 +11,10 @@ import EventWheel from './components/EventWheel';
 import DebrisDashboard from './components/DebrisDashboard'; 
 import SpaceHistoryChart from './components/SpaceHistoryChart';
 import VideoGallery from './components/VideoGallery';
-
-// 🔴 引入新做的清理方案组件
 import CleanupMethods from './components/CleanupMethods';
+
+// 🔴 引入新做的总结页面
+import OrbitLegacy from './components/OrbitLegacy';
 
 export default function App() {
   const [currentOrbit, setCurrentOrbit] = useState('LEO');
@@ -26,8 +27,8 @@ export default function App() {
         <directionalLight position={[5, 5, 5]} intensity={1} color="#FF6B00" />
         
         <Suspense fallback={null}>
-            {/* 🔴 调整总页数为 9.2，确保能滚到底部 */}
-            <ScrollControls pages={9.2} damping={0.3}>
+            {/* 🔴 调整总页数为 10.5，为最后一页留出空间 */}
+            <ScrollControls pages={10} damping={0.3}>
             
               {/* === 3D 场景层 === */}
               <Scroll>
@@ -72,15 +73,20 @@ export default function App() {
                     <VideoGallery />
                 </div>
 
-                {/* P7: 🔴 最后一页：清理方案 (740vh) */}
+                {/* P7: 清理方案 (740vh) */}
+                <div style={{ position: 'absolute', top: '740vh', left: 0, width: '100vw', height: '100vh' }}>
+                    <CleanupMethods />
+                </div>
+
+                {/* P8: 🔴 总结页面 (860vh) - 位于最底部 */}
                 <div style={{ 
                     position: 'absolute', 
-                    top: '740vh', // 紧接在视频画廊后面
+                    top: '860vh', 
                     left: 0, 
                     width: '100vw', 
                     height: '100vh' 
                 }}>
-                    <CleanupMethods />
+                    <OrbitLegacy />
                 </div>
 
               </Scroll>

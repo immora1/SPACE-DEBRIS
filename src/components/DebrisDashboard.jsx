@@ -2,23 +2,21 @@ import React, { useState, useMemo, useRef } from 'react';
 
 // === ⚙️ 布局调节配置 ===
 const LAYOUT_CONFIG = {
-  // 板块三：整体内容距离标题顶部的距离
-  CONTENT_OFFSET_TOP: '50px', 
+  // 🔴 修改：增加顶部偏移，给下方腾出更多呼吸空间
+  CONTENT_OFFSET_TOP: '80px', 
   
-  // 板块三：图片和下方文字的间距
-  IMG_TEXT_GAP: '40px', 
-  
-  // 图片最大高度
-  IMG_MAX_HEIGHT: '100px'
+  // 图片最大高度 (保持 110px 以免挤占文字空间)
+  IMG_MAX_HEIGHT: '110px'     
 };
 
 // === 🎨 极简配色系统 ===
 const THEME = {
-  primary: '#4C42D7', // 核心蓝
+  primary: '#4C42D7', 
   white: '#FFFFFF',
-  grey: '#888888',
+  grey: '#CCCCCC',
+  dim: '#666666',
   dark: '#050505',
-  grid: 'rgba(76, 66, 215, 0.15)'
+  border: 'rgba(255,255,255,0.1)'
 };
 
 // === 1. 趋势数据 ===
@@ -51,24 +49,44 @@ const TREND_DATA = [
 const COUNTRY_DATA = [
   { name: 'USA', total: 25786, color: THEME.primary },    
   { name: 'RUSSIA (CIS)', total: 25144, color: THEME.white }, 
-  { name: 'CHINA', total: 8774, color: 'rgba(76, 66, 215, 0.6)' },   
+  { name: 'CHINA', total: 8774, color: '#6C63FF' },   
   { name: 'OTHERS', total: 6528, color: '#333' }   
 ];
 
 // 3. 来源板块
 const SOURCES = [
-  { title: "失效卫星", img: "/images/source_1.png", desc: "失去姿态控制的“金属僵尸”，在轨道无序翻滚，随时可能自我解体。" },
-  { title: "碰撞与爆炸", img: "/images/source_2.png", desc: "最致命的增量源。自爆或撞击能在毫秒间产生数千个高速弹片。" },
-  { title: "操作性遗留", img: "/images/source_3.png", desc: "人类工业痕迹。从火箭包带到丢失的工具，皆具备击穿动能。" }
+  { title: "失效卫星", img: "/images/source_1.png", desc: "失去姿态控制的“金属僵尸”，在轨道无序翻滚。" },
+  { title: "碰撞与爆炸", img: "/images/source_2.png", desc: "最致命的增量源。自爆或撞击能在毫秒间产生数千个弹片。" },
+  { title: "操作性遗留", img: "/images/source_3.png", desc: "人类工业痕迹。从火箭包带到丢失的工具。" }
 ];
 
-// === 通用标题组件 ===
+// === 标题组件 ===
 const SectionTitle = ({ zh, en }) => (
-  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '20px' }}>
-    <div style={{ marginTop: '12px', width: '12px', height: '12px', background: THEME.primary, borderRadius: '50%', boxShadow: `0 0 10px ${THEME.primary}` }}></div>
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <span style={{ fontSize: '2.0rem', fontWeight: '900', color: '#fff', lineHeight: '1.1', letterSpacing: '2px' }}>{zh}</span>
-      <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#fff', opacity: 0.8, letterSpacing: '2px', textTransform: 'uppercase', marginTop: '6px' }}>{en}</span>
+  <div style={{ marginBottom: '15px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: '6px', height: '6px', background: THEME.primary }}></div>
+        <h2 style={{ 
+            fontSize: '1.8rem', 
+            fontWeight: '900',
+            color: '#fff', 
+            margin: 0, 
+            letterSpacing: '2px', 
+            fontFamily: '"Lexend", sans-serif' 
+        }}>
+            {zh}
+        </h2>
+    </div>
+    <div style={{ 
+        fontSize: '0.8rem', 
+        fontWeight: '700', 
+        color: THEME.primary, 
+        letterSpacing: '3px', 
+        textTransform: 'uppercase', 
+        marginTop: '6px',
+        marginLeft: '18px',
+        fontFamily: '"Lexend", sans-serif'
+    }}>
+        {en}
     </div>
   </div>
 );
@@ -119,38 +137,39 @@ export default function DebrisDashboard() {
     width: '100vw', height: '100vh', 
     background: THEME.dark, color: THEME.white, 
     position: 'relative', overflow: 'hidden',
-    fontFamily: 'Helvetica, Arial, sans-serif'
+    fontFamily: '"Lexend", sans-serif'
   };
 
   const sectionStyle = {
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    padding: '40px',
+    padding: '30px 50px', 
     boxSizing: 'border-box',
     overflow: 'hidden',
     height: '100%',
-    justifyContent: 'space-between' 
+    justifyContent: 'space-between'
   };
 
   const descStyle = {
-    fontSize: '14px', color: THEME.grey, lineHeight: '1.7', 
-    textAlign: 'justify', marginTop: '20px', fontWeight: '400'
+    fontSize: '13px', 
+    color: THEME.grey, 
+    lineHeight: '1.8', 
+    textAlign: 'justify', 
+    marginTop: '15px', 
+    fontWeight: '300',
+    letterSpacing: '0.5px'
   };
 
   return (
     <div style={containerStyle}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;700;900&display=swap');`}</style>
 
-      {/* 🔴 背景: 纯净的白色加粗十字 */}
+      {/* 背景 */}
       <svg style={{ position: 'absolute', width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
-        {/* 垂直粗线 */}
-        <line x1="50%" y1="-10%" x2="50%" y2="110%" stroke="white" strokeWidth="10" opacity="0.6" />
-        
-        {/* 水平粗线 */}
-        <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke="white" strokeWidth="10" opacity="0.6" />
-        
-        {/* 中心锚点 */}
-        <circle cx="50%" cy="50%" r="8" fill={THEME.primary} stroke="white" strokeWidth="3" style={{ zIndex: 10 }} />
+        <line x1="50%" y1="-10%" x2="50%" y2="110%" stroke="white" strokeWidth="2" opacity="0.1" />
+        <line x1="-10%" y1="50%" x2="110%" y2="50%" stroke="white" strokeWidth="2" opacity="0.1" />
+        <circle cx="50%" cy="50%" r="6" fill={THEME.dark} stroke={THEME.primary} strokeWidth="3" style={{ zIndex: 10 }} />
       </svg>
 
       {/* 2x2 网格 */}
@@ -162,8 +181,8 @@ export default function DebrisDashboard() {
         position: 'relative', zIndex: 1
       }}>
 
-        {/* 1. 左上: 趋势 */}
-        <div style={{ ...sectionStyle, borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        {/* 1. 左上: 趋势图 */}
+        <div style={{ ...sectionStyle, borderRight: `1px solid ${THEME.border}`, borderBottom: `1px solid ${THEME.border}` }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <SectionTitle zh="太空垃圾趋势" en="Debris Trend" />
             
@@ -171,17 +190,17 @@ export default function DebrisDashboard() {
                 ref={chartRef}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
-                style={{ flex: 1, minHeight: '100px', maxHeight: '140px', position: 'relative', marginTop: '10px', cursor: 'crosshair' }}
+                style={{ flex: 1, minHeight: '100px', maxHeight: '180px', position: 'relative', marginTop: '10px', cursor: 'crosshair' }}
             >
               <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible', position: 'absolute', top: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="gradBlue" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor={THEME.primary} stopOpacity="0.3"/>
+                    <stop offset="0%" stopColor={THEME.primary} stopOpacity="0.4"/>
                     <stop offset="100%" stopColor={THEME.primary} stopOpacity="0"/>
                   </linearGradient>
                 </defs>
                 <path d={trendPath} fill="url(#gradBlue)" />
-                <path d={linePath} fill="none" stroke={THEME.primary} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+                <path d={linePath} fill="none" stroke={THEME.primary} strokeWidth="2" vectorEffect="non-scaling-stroke" />
               </svg>
 
               {hoveredYear && (() => {
@@ -190,11 +209,11 @@ export default function DebrisDashboard() {
                  const yPercent = getY(hoveredYear.count);
                  return (
                     <>
-                        <div style={{ position: 'absolute', left: `${xPercent}%`, top: 0, bottom: 0, width: '1px', background: THEME.primary, opacity: 0.3, pointerEvents: 'none' }} />
-                        <div style={{ position: 'absolute', left: `${xPercent}%`, top: `${yPercent}%`, width: '8px', height: '8px', borderRadius: '50%', background: THEME.white, border: `2px solid ${THEME.primary}`, transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 10 }} />
-                        <div style={{ position: 'absolute', left: `${xPercent}%`, top: `${yPercent}%`, transform: 'translate(-50%, -150%)', background: THEME.primary, padding: '4px 8px', borderRadius: '2px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', marginBottom: '2px' }}>{hoveredYear.year}</div>
-                            <div style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold' }}>{hoveredYear.count.toLocaleString()}</div>
+                        <div style={{ position: 'absolute', left: `${xPercent}%`, top: 0, bottom: 0, width: '1px', background: THEME.primary, opacity: 0.5, pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', left: `${xPercent}%`, top: `${yPercent}%`, width: '10px', height: '10px', borderRadius: '50%', background: THEME.white, border: `2px solid ${THEME.primary}`, transform: 'translate(-50%, -50%)', pointerEvents: 'none', zIndex: 10 }} />
+                        <div style={{ position: 'absolute', left: `${xPercent}%`, top: `${yPercent}%`, transform: 'translate(-50%, -150%)', background: THEME.primary, padding: '6px 12px', borderRadius: '2px', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 20, boxShadow: '0 10px 20px rgba(0,0,0,0.5)' }}>
+                            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '2px' }}>{hoveredYear.year}</div>
+                            <div style={{ fontSize: '16px', color: '#fff', fontWeight: 'bold' }}>{hoveredYear.count.toLocaleString()}</div>
                         </div>
                     </>
                  );
@@ -202,27 +221,27 @@ export default function DebrisDashboard() {
             </div>
           </div>
           <div style={descStyle}>
-            太空垃圾正从稳步积累向指数级爆发失控演变。半个多世纪的航天活动曾将编目物体控制在万个以内，但21世纪初的两次重大碰撞事件让碎片量瞬间激增 40%。截至 2025 年，微小碎片更突破 1.8 亿个，连锁碰撞风险正迫在眉睫。
+            太空垃圾正从稳步积累向指数级爆发失控演变。半个多世纪的航天活动曾将编目物体控制在万个以内，但21世纪初的两次重大碰撞事件让碎片量瞬间激增 40%。
           </div>
         </div>
 
 
-        {/* 2. 右上: 国家分布 */}
-        <div style={{ ...sectionStyle, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        {/* 2. 右上: 全球份额 (优化垂直间距) */}
+        <div style={{ ...sectionStyle, borderBottom: `1px solid ${THEME.border}` }}>
           <div style={{ flex: 1 }}>
             <SectionTitle zh="全球份额分布" en="Global Share" />
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
               {COUNTRY_DATA.map((item, index) => (
                 <div key={index} style={{ position: 'relative' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#ddd', letterSpacing: '0.5px' }}>{item.name}</span>
-                    <span style={{ fontSize: '12px', color: item.color === '#333' ? '#888' : item.color, fontFamily: 'monospace', fontWeight: 'bold' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff', letterSpacing: '1px' }}>{item.name}</span>
+                    <span style={{ fontSize: '16px', color: item.color === '#333' ? THEME.dim : item.color, fontFamily: '"Lexend", sans-serif', fontWeight: '700' }}>
                         {item.total.toLocaleString()}
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '6px', background: '#1a1a1a', borderRadius: '0px' }}>
-                    <div style={{ width: `${(item.total / 30000) * 100}%`, height: '100%', background: item.color, borderRadius: '0px' }}></div>
+                  <div style={{ width: '100%', height: '4px', background: '#111' }}>
+                    <div style={{ width: `${(item.total / 30000) * 100}%`, height: '100%', background: item.color }}></div>
                   </div>
                 </div>
               ))}
@@ -234,8 +253,8 @@ export default function DebrisDashboard() {
         </div>
 
 
-        {/* 3. 左下: 来源 */}
-        <div style={{ ...sectionStyle, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+        {/* 3. 左下: 来源分析 (🔴 重点：调整图片与文字距离 + 放大字号) */}
+        <div style={{ ...sectionStyle, borderRight: `1px solid ${THEME.border}` }}>
           <div style={{ flex: 1 }}>
             <SectionTitle zh="碎片来源分析" en="Debris Sources" />
 
@@ -246,21 +265,43 @@ export default function DebrisDashboard() {
                 marginTop: LAYOUT_CONFIG.CONTENT_OFFSET_TOP 
             }}>
               {SOURCES.map((src, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <img 
-                    src={src.img} 
-                    alt={src.title}
-                    style={{
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {/* 图片区域 */}
+                  <div style={{ 
                       width: '100%', 
-                      height: 'auto', 
-                      maxHeight: LAYOUT_CONFIG.IMG_MAX_HEIGHT,
-                      objectFit: 'contain', 
-                      marginBottom: LAYOUT_CONFIG.IMG_TEXT_GAP, 
-                      opacity: 0.9 
-                    }}
-                  />
-                  <div style={{ color: THEME.primary, fontSize: '18px', fontWeight: 'bold', marginBottom: '6px' }}>{src.title}</div>
-                  <div style={{ color: THEME.grey, fontSize: '13px', lineHeight: '1.5', textAlign: 'left' }}>{src.desc}</div>
+                      height: LAYOUT_CONFIG.IMG_MAX_HEIGHT, // 110px
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      // 🔴 关键修改：增加图片底部的间距 (15px -> 30px)
+                      marginBottom: '40px'
+                  }}>
+                    <img 
+                        src={src.img} 
+                        alt={src.title}
+                        style={{
+                          maxWidth: '100%', 
+                          maxHeight: '100%', 
+                          objectFit: 'contain', 
+                          filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.8))',
+                          transition: 'transform 0.3s ease',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.1) translateY(-10px)'}
+                        onMouseLeave={(e) => e.target.style.transform = 'scale(1) translateY(0)'}
+                    />
+                  </div>
+                  
+                  <div style={{ width: '100%', textAlign: 'left' }}>
+                    {/* 🔴 关键修改：放大标题字号 (15px -> 20px) */}
+                    <div style={{ color: THEME.primary, fontSize: '20px', fontWeight: '800', marginBottom: '6px', letterSpacing: '1px' }}>
+                        {src.title}
+                    </div>
+                    {/* 🔴 关键修改：保持 12px 但增加对比度和行高 */}
+                    <div style={{ color: THEME.grey, fontSize: '12px', lineHeight: '1.6' }}>
+                        {src.desc}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -268,7 +309,7 @@ export default function DebrisDashboard() {
         </div>
 
 
-        {/* 4. 右下: 危害 */}
+        {/* 4. 右下: 危害数据 */}
         <div style={sectionStyle}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <SectionTitle zh="关键危害数据" en="Critical Impact" />
@@ -278,28 +319,34 @@ export default function DebrisDashboard() {
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                gap: '60px' 
+                gap: '60px',
+                marginTop: '10px'
             }}>
-              <div>
-                <div style={{ fontSize: '52px', fontWeight: '700', color: THEME.white, lineHeight: 1, letterSpacing: '-1px' }}>
-                  7.5 <span style={{ fontSize: '16px', fontWeight: '400', color: THEME.grey }}>km/s</span>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '5rem', fontWeight: '900', color: THEME.white, lineHeight: 0.9, letterSpacing: '-2px' }}>
+                  7.5
                 </div>
-                <div style={{ fontSize: '12px', color: THEME.primary, marginTop: '8px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>Impact Velocity</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: '300', color: THEME.grey, marginTop: '5px' }}>km/s</div>
+                <div style={{ width: '40px', height: '4px', background: THEME.primary, margin: '15px auto 10px auto' }}></div>
+                <div style={{ fontSize: '0.8rem', color: THEME.primary, fontWeight: '700', letterSpacing: '2px', textTransform: 'uppercase' }}>Impact Velocity</div>
               </div>
               
-              <div style={{ width: '1px', height: '50px', background: '#222' }}></div>
+              {/* 分割线 */}
+              <div style={{ width: '1px', height: '80px', background: '#333' }}></div>
 
-              <div>
-                <div style={{ fontSize: '52px', fontWeight: '700', color: THEME.white, lineHeight: 1, letterSpacing: '-1px' }}>
-                  1.3 <span style={{ fontSize: '16px', fontWeight: '400', color: THEME.grey }}>Bn</span>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '5rem', fontWeight: '900', color: THEME.white, lineHeight: 0.9, letterSpacing: '-2px' }}>
+                  1.3
                 </div>
-                <div style={{ fontSize: '12px', color: THEME.primary, marginTop: '8px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>Total Particles</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: '300', color: THEME.grey, marginTop: '5px' }}>Bn</div>
+                <div style={{ width: '40px', height: '4px', background: THEME.primary, margin: '15px auto 10px auto' }}></div>
+                <div style={{ fontSize: '0.8rem', color: THEME.primary, fontWeight: '700', letterSpacing: '2px', textTransform: 'uppercase' }}>Total Particles</div>
               </div>
             </div>
           </div>
           
           <div style={descStyle}>
-            太空垃圾的真正危害源于其极高的空间密度与恐怖的动能释放：轨道上现存超过 1.3亿 个微小碎片，将近地空间变成了一个随时可能爆发的“地雷区”；这些碎片以每秒 7.5公里 的极速运行，意味着哪怕是一粒漆皮或螺丝钉，也具备瞬间击穿并摧毁千万级卫星任务的致死杀伤力。
+            轨道上现存超过 1.3亿 个微小碎片，将近地空间变成了一个随时可能爆发的“地雷区”；这些碎片以每秒 7.5公里 的极速运行，哪怕是一粒漆皮，也具备致死杀伤力。
           </div>
         </div>
 
