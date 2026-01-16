@@ -32,7 +32,7 @@ export default function App() {
         
         <Suspense fallback={null}>
             {/* 🔴 修改：总页数增加到 13，以容纳新插入的板块 */}
-            <ScrollControls pages={13} damping={0.3}>
+            <ScrollControls pages={12} damping={0.3}>
             
               <Scroll>
                 <GlobalDebris />
