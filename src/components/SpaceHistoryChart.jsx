@@ -8,7 +8,7 @@ const THEME = {
   dark: '#050505',
 };
 
-// === 1. 核心数据源 ===
+// === 数据源 (保持不变) ===
 const EVENTS = [
   { id: 1, year: 1957, duration: 5, severity: 15, title: "Sputnik 1 发射", desc: "人类航天时代的开端。运载火箭末级成为首个大型太空垃圾。" },
   { id: 2, year: 1958, duration: 25, severity: 20, title: "Vanguard 1", desc: "目前在轨最古老的人造物体，预计停留600年。" },
@@ -33,7 +33,6 @@ const EVENTS = [
   { id: 29, year: 2024, duration: 15, severity: 85, title: "Intelsat 33e 解体", desc: "波音通信卫星在GEO轨道突然解体，产生大量碎片。" }
 ];
 
-// 曲线数据
 const SEVERITY_POINTS = [
     { year: 1957, val: 5 },  { year: 1961, val: 45 }, { year: 1965, val: 15 }, 
     { year: 1973, val: 65 }, { year: 1978, val: 80 }, { year: 1981, val: 40 }, 
@@ -51,12 +50,9 @@ export default function SpaceHistoryChart() {
   const width = 1600; 
   const height = 800;
   const centerY = 450; 
-  
   const startYear = 1957;
   const endYear = 2025; 
   const yearRange = endYear - startYear;
-  
-  // 调整内部绘图边距
   const paddingLeft = 50; 
   const availableWidth = width - 100; 
   const pxPerYear = availableWidth / yearRange;
@@ -134,7 +130,6 @@ export default function SpaceHistoryChart() {
     <div style={{ 
         width: '100%', 
         height: '100%', 
-        // 🔴 关键修改 1：背景改为透明，让 3D 碎片透出来
         background: 'transparent',
         display: 'flex', 
         flexDirection: 'column', 
@@ -146,78 +141,47 @@ export default function SpaceHistoryChart() {
         boxSizing: 'border-box'
     }}>
 
-      {/* 图片覆盖层 (保留叠加效果) */}
+      {/* 图片覆盖层 */}
       <div style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          width: '100%', 
-          height: '115%', 
-          zIndex: 20,
-          pointerEvents: 'none',
-          mixBlendMode: 'screen', 
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '115%',
+          zIndex: 20, pointerEvents: 'none', mixBlendMode: 'screen', 
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
       }}>
-        <img 
-            src="/images/chart_bg.png" 
-            alt="background"
-            style={{ 
-                width: '85%', 
-                height: 'auto', 
-                objectFit: 'contain',
-                opacity: 0.8 
-            }}
-        />
+        <img src="/images/chart_bg.png" alt="background" style={{ width: '85%', height: 'auto', objectFit: 'contain', opacity: 0.8 }} />
       </div>
       
-      {/* 顶部连接线 */}
+      {/* 🔥🔥🔥 顶部连接线 (已缩短) 🔥🔥🔥 */}
       <div style={{ 
           position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-          width: '1px', height: '100px', zIndex: 5,
-          background: `linear-gradient(to bottom, ${THEME.primary}, transparent)` 
+          width: '2px', 
+          // 🔴 核心修改：缩短高度到 80px，确保它悬停在标题上方，不接触文字
+          height: '80px', 
+          zIndex: 40,
+          background: `linear-gradient(to bottom, ${THEME.primary}, transparent)`,
+          boxShadow: `0 0 15px ${THEME.primary}, 0 0 30px ${THEME.primary}`
       }}></div>
 
       {/* 标题区域 */}
       <div style={{ width: '100%', textAlign: 'center', marginBottom: '20px', position: 'relative', zIndex: 30 }}>
           <h2 style={{ 
-              color: THEME.white, 
-              fontSize: '3rem', 
-              fontWeight: '900', 
-              letterSpacing: '8px',
-              margin: 0,
-              fontFamily: '"Lexend", sans-serif',
-              textTransform: 'uppercase'
+              color: THEME.white, fontSize: '3rem', fontWeight: '900', letterSpacing: '8px',
+              margin: 0, fontFamily: '"Lexend", sans-serif', textTransform: 'uppercase'
           }}>
             Orbital <span style={{ color: THEME.primary }}>History</span>
           </h2>
           <p style={{ 
-              color: THEME.grey, 
-              fontSize: '0.9rem', 
-              marginTop: '10px', 
-              letterSpacing: '4px', 
-              textTransform: 'uppercase',
-              fontFamily: '"Lexend", sans-serif'
+              color: THEME.grey, fontSize: '0.9rem', marginTop: '10px', letterSpacing: '4px', 
+              textTransform: 'uppercase', fontFamily: '"Lexend", sans-serif'
           }}>
               Timeline of Impact (1957-2025)
           </p>
       </div>
 
       {/* SVG 图表层 */}
-      {/* 🔴 关键修改 2：限制图表最大高度 (maxHeight)，防止把标题顶出屏幕 */}
       <svg 
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`} 
-        style={{ 
-            width: '100%', 
-            // 限制高度不超过视窗的 60%，保证上下都有空间
-            maxHeight: '60vh', 
-            height: 'auto', 
-            overflow: 'visible', 
-            position: 'relative', 
-            zIndex: 10 
-        }}
+        style={{ width: '100%', height: '100%', overflow: 'visible', position: 'relative', zIndex: 10 }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleSvgLeave}
       >
@@ -235,44 +199,23 @@ export default function SpaceHistoryChart() {
             </filter>
         </defs>
 
-        <path 
-            d={`${curvePath} L ${width} ${centerY} L 0 ${centerY} Z`} 
-            fill="url(#curveFill)" 
-            stroke="none" 
-        />
-
-        <path 
-            d={curvePath} 
-            fill="none" 
-            stroke={THEME.white} 
-            strokeWidth="2" 
-            style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' }}
-        />
-
+        <path d={`${curvePath} L ${width} ${centerY} L 0 ${centerY} Z`} fill="url(#curveFill)" stroke="none" />
+        <path d={curvePath} fill="none" stroke={THEME.white} strokeWidth="2" style={{ filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' }} />
         <path d={curvePath} fill="none" stroke="transparent" strokeWidth="100" />
 
         {hoveredCurve && (
             <g style={{ pointerEvents: 'none' }}>
-                <line 
-                    x1={hoveredCurve.x} y1={hoveredCurve.y} 
-                    x2={hoveredCurve.x} y2={centerY} 
-                    stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4"
-                />
+                <line x1={hoveredCurve.x} y1={hoveredCurve.y} x2={hoveredCurve.x} y2={centerY} stroke="rgba(255,255,255,0.2)" strokeDasharray="4 4"/>
                 <circle cx={hoveredCurve.x} cy={hoveredCurve.y} r="6" fill={THEME.white} filter="url(#glow)" />
                 <g transform={`translate(${hoveredCurve.x}, ${hoveredCurve.y - 60})`}>
                     <rect x="-60" y="-35" width="120" height="35" rx="2" fill="rgba(20,20,20,0.9)" stroke={THEME.primary} strokeWidth="1" />
-                    <text x="0" y="-12" fill={THEME.white} fontSize="14" textAnchor="middle" fontWeight="bold">
-                        RISK: {hoveredCurve.val}%
-                    </text>
-                    <text x="0" y="25" fill={THEME.grey} fontSize="12" textAnchor="middle" fontWeight="bold">
-                        {Math.floor(hoveredCurve.year)}
-                    </text>
+                    <text x="0" y="-12" fill={THEME.white} fontSize="14" textAnchor="middle" fontWeight="bold">RISK: {hoveredCurve.val}%</text>
+                    <text x="0" y="25" fill={THEME.grey} fontSize="12" textAnchor="middle" fontWeight="bold">{Math.floor(hoveredCurve.year)}</text>
                 </g>
             </g>
         )}
 
         <line x1="0" y1={centerY} x2={width} y2={centerY} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-        
         {Array.from({ length: yearRange + 1 }).map((_, i) => {
             const year = startYear + i;
             const x = getX(year);
@@ -290,38 +233,15 @@ export default function SpaceHistoryChart() {
             const radius = (ev.duration * 4) + (ev.severity * 0.2) + 20; 
             const isHovered = hoveredEvent && hoveredEvent.id === ev.id;
             const currentRadius = isHovered ? radius * 1.1 : radius;
-            
             const d = `M ${x - currentRadius} ${centerY} A ${currentRadius} ${currentRadius} 0 0 0 ${x + currentRadius} ${centerY} Z`;
-
             return (
-                <g 
-                    key={ev.id}
-                    onMouseEnter={() => setHoveredEvent(ev)}
-                    onMouseLeave={() => setHoveredEvent(null)}
-                    style={{ cursor: 'pointer', transition: 'all 0.3s' }}
-                >
-                    <path 
-                        d={d}
-                        fill={THEME.primary}
-                        style={{ 
-                            mixBlendMode: 'screen', 
-                            transition: 'all 0.3s ease-out',
-                            opacity: isHovered ? 0.9 : 0.3, 
-                        }} 
-                    />
-
+                <g key={ev.id} onMouseEnter={() => setHoveredEvent(ev)} onMouseLeave={() => setHoveredEvent(null)} style={{ cursor: 'pointer', transition: 'all 0.3s' }}>
+                    <path d={d} fill={THEME.primary} style={{ mixBlendMode: 'screen', transition: 'all 0.3s ease-out', opacity: isHovered ? 0.9 : 0.3 }} />
                     {isHovered && (
                         <g>
                             <line x1={x} y1={centerY} x2={x} y2={centerY + currentRadius + 60} stroke={THEME.white} strokeWidth="1" />
                             <foreignObject x={x > width - 300 ? x - 320 : x + 20} y={centerY + currentRadius + 20} width="300" height="200">
-                                <div style={{ 
-                                    background: 'rgba(10,10,10,0.95)', 
-                                    border: `1px solid ${THEME.primary}`, 
-                                    padding: '20px',
-                                    color: '#fff',
-                                    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
-                                    fontFamily: 'sans-serif'
-                                }}>
+                                <div style={{ background: 'rgba(10,10,10,0.95)', border: `1px solid ${THEME.primary}`, padding: '20px', color: '#fff', boxShadow: '0 20px 60px rgba(0,0,0,0.8)', fontFamily: 'sans-serif' }}>
                                     <div style={{ fontSize: '12px', color: THEME.primary, letterSpacing:'2px', marginBottom:'5px' }}>{ev.year} EVENT</div>
                                     <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', marginBottom:'10px' }}>{ev.title}</div>
                                     <div style={{ fontSize: '13px', color: '#ccc', lineHeight: '1.6' }}>{ev.desc}</div>
@@ -334,11 +254,15 @@ export default function SpaceHistoryChart() {
         })}
       </svg>
 
-      {/* 底部连接线 */}
+      {/* 🔥🔥🔥 底部连接线 (已缩短) 🔥🔥🔥 */}
       <div style={{ 
           position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-          width: '1px', height: '100px', zIndex: 5,
-          background: `linear-gradient(to top, ${THEME.primary}, transparent)` 
+          width: '2px', 
+          // 🔴 核心修改：缩短高度到 80px
+          height: '80px', 
+          zIndex: 40,
+          background: `linear-gradient(to top, ${THEME.primary}, transparent)`,
+          boxShadow: `0 0 15px ${THEME.primary}, 0 0 30px ${THEME.primary}`
       }}></div>
 
     </div>
